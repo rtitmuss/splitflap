@@ -5,15 +5,15 @@ name: "Variants demo using GitHub actions and quick-start"
 on:
   push:
     paths:
-      - '*.kicad_sch'
-      - '*.kicad_pcb'
-      - '*.kibot.yaml'
+      - '**.kicad_sch'
+      - '**.kicad_pcb'
+      - '**.kibot.yaml'
       - '.github/workflows/kibot_action_quick_start.yml'
   pull_request:
     paths:
-      - '*.kicad_sch'
-      - '*.kicad_pcb'
-      - '*.kibot.yaml'
+      - '**.kicad_sch'
+      - '**.kicad_pcb'
+      - '**.kibot.yaml'
       - '.github/workflows/kibot_action_quick_start.yml'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
