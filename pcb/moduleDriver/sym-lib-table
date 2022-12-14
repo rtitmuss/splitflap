@@ -1,4 +1,5 @@
 (sym_lib_table
   (lib (name "New_Library")(type "KiCad")(uri "${KIPRJMOD}/New_Library.kicad_sym")(options "")(descr ""))
   (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/../KiCad-RP-Pico/RP-Pico Libraries/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+  (lib (name "RPi_Pico")(type "KiCad")(uri "/Users/richard/splitflap/VGA-PicoW-KiCAD/RPi_Pico.kicad_sym")(options "")(descr ""))
 )
