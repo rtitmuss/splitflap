@@ -4152,7 +4152,7 @@
     (uuid 6f336346-5d61-455e-87af-8af3f2fa5ed6)
     (property "Reference" "U5" (id 0) (at 63.5 92.71 0))
     (property "Value" "PicoW" (id 1) (at 63.5 95.25 0))
-    (property "Footprint" "RPi_PicoW:RPi_Pico_SMD_TH" (id 2) (at 63.5 124.46 90)
+    (property "Footprint" "Library:RPi_PicoW_SMD_TH" (id 2) (at 63.5 124.46 90)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 63.5 124.46 0)
@@ -5808,7 +5808,7 @@
       (reference "U4") (unit 1) (value "74HC125") (footprint "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
     )
     (path "/6f336346-5d61-455e-87af-8af3f2fa5ed6"
-      (reference "U5") (unit 1) (value "PicoW") (footprint "RPi_PicoW:RPi_Pico_SMD_TH")
+      (reference "U5") (unit 1) (value "PicoW") (footprint "Library:RPi_PicoW_SMD_TH")
     )
     (path "/93b074e2-947f-4603-9b09-f104fb3885cb"
       (reference "U6") (unit 1) (value "OKI-78SR-5_1.5-W36-C") (footprint "Converter_DCDC:Converter_DCDC_Murata_OKI-78SR_Vertical")
