@@ -34,12 +34,11 @@ jobs:
       with:
         quickstart: YES
 
-    - name: Tar files
-      run: tar -cvf Artifact.tar Generated
-
+    - run: ls -lR Generated
+      
     - name: Upload results
       uses: actions/upload-artifact@v3
       with:
         name: Automatic_outputs
-        path: Artifact.tar
+        path: Generated
 
