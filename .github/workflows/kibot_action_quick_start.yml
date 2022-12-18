@@ -34,7 +34,7 @@ jobs:
       with:
         quickstart: YES
 
-    - run: ls -lR Generated
+    - run: chmod -R a+r Generated
       
     - name: Upload results
       uses: actions/upload-artifact@v3
