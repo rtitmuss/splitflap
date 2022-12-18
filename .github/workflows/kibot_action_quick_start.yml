@@ -34,7 +34,7 @@ jobs:
       with:
         quickstart: YES
 
-    - run: chmod -R a+r Generated
+    - run: sudo chmod -R a+r Generated
       
     - name: Upload results
       uses: actions/upload-artifact@v3
