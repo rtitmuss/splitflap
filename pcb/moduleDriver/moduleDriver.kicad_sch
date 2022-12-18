@@ -1767,6 +1767,11 @@
     (effects (font (size 3 3)) (justify left bottom))
     (uuid 970e6701-d437-43aa-8985-609f9d3f073e)
   )
+  (text "As you're laying out, double click the pico and click\nedit symbol.  Then swap around all the GPIOs to make \nrouting easier.  Except for the I2C bus, literally\nall the GPIOS are interchangeable.  Make routing simple."
+    (at 102.87 41.91 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid aab33ac2-d20e-4b2d-bed6-6a3d26688aa7)
+  )
   (text "MASTER SELECT" (at 24.13 101.6 0)
     (effects (font (size 3 3)) (justify left bottom))
     (uuid d0fba7a8-7f67-4f76-b70c-12461f91298a)
