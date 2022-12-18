@@ -35,7 +35,7 @@ jobs:
         quickstart: YES
 
     - name: Upload results
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Automatic_outputs
         path: Generated
