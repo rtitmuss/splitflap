@@ -55,10 +55,7 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [
-        "courtyards_overlap|130195001|69532001|6e6f2a07-2d80-469b-afa3-da9392bca349|8369ab40-ee64-46ab-ba37-38b3542382af",
-        "courtyards_overlap|130223190|63436001|692f5487-0ed1-4120-86fa-591e5c0ff5e9|8369ab40-ee64-46ab-ba37-38b3542382af"
-      ],
+      "drc_exclusions": [],
       "meta": {
         "version": 2
       },
@@ -141,11 +138,7 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [
-      "lib_symbol_issues|1206500|825500|8b9887fc-cdaf-43d6-b608-95de4fa207e2|00000000-0000-0000-0000-000000000000",
-      "lib_symbol_issues|2057400|1003300|d0051fc6-4078-45f2-9301-7b6a73b8343d|00000000-0000-0000-0000-000000000000",
-      "lib_symbol_issues|2057400|635000|e21eef33-f41b-4a42-817d-1776dcfe2c4a|00000000-0000-0000-0000-000000000000"
-    ],
+    "erc_exclusions": [],
     "meta": {
       "version": 0
     },
