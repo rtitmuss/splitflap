@@ -41,11 +41,11 @@ if (SINGLE_FLAP) {
 // A grid if flaps
 module FlapGrid(printJob, layer) {
     offset = printJob * FLAPS;
-    letters = substring(LETTERS, offset, min([offset + FLAPS, len(LETTERS)]));
+    letters = substring(LETTERS, offset, min([offset + FLAPS + 1, len(LETTERS)]));
     
     echo(letters)
     
-    for (i = [0 : len(letters)-1]) {
+    for (i = [0 : min([FLAPS - 1, len(letters) - 2])]) {
         row = i % ROWS;
         col = floor(i / ROWS);
 
