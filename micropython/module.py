@@ -3,8 +3,6 @@ import math
 
 class Module:
 
-    HOME_PIN_ACTIVE = 1
-
     STEPS_PER_REVOLUTION = 2038  # 28BYJ-48
 
     LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#'
@@ -13,17 +11,21 @@ class Module:
 
     MAX_HOME_STEPS = STEPS_PER_LETTER * 2
 
+    MAX_NON_HOME_STEPS = STEPS_PER_REVOLUTION * 1.1
+
     MOT_PHASE_A = 0b00001000
     MOT_PHASE_B = 0b00000100
     MOT_PHASE_C = 0b00000010
     MOT_PHASE_D = 0b00000001
 
-    STEP_PATTERN = list(reversed([
+    STEP_PATTERN = [
         MOT_PHASE_A | MOT_PHASE_B, MOT_PHASE_B | MOT_PHASE_C,
         MOT_PHASE_C | MOT_PHASE_D, MOT_PHASE_D | MOT_PHASE_A
-    ]))
+    ]
 
-    def __init__(self):
+    def __init__(self, home_pin_active=1):
+        self.home_pin_active = home_pin_active
+
         # True if error is detected
         self.panic_error = False
 
@@ -67,7 +69,7 @@ class Module:
         return self.motor_pins
 
     def is_stopped(self):
-        return self.motor_position == self.letter_position
+        return self.motor_pins == 0
 
     def is_panic(self):
         return self.panic_error
@@ -90,7 +92,7 @@ class Module:
             raise ValueError('home_pin not set')
 
         if self.motor_pins:
-            if self.home_pin == Module.HOME_PIN_ACTIVE:
+            if self.home_pin == self.home_pin_active:
                 self.count_home_steps += 1
                 self.max_count_home_steps = max(self.max_count_home_steps,
                                                 self.count_home_steps)
@@ -107,7 +109,7 @@ class Module:
                 self.max_count_non_home_steps = max(
                     self.max_count_non_home_steps, self.count_non_home_steps)
 
-                if self.count_non_home_steps > Module.STEPS_PER_REVOLUTION:
+                if self.count_non_home_steps > Module.MAX_NON_HOME_STEPS:
                     self.panic('missed home')
 
         if self.panic_error:
@@ -115,7 +117,7 @@ class Module:
 
         if self.motor_position != self.letter_position or self.force_rotation:
             self.motor_pins = Module.STEP_PATTERN[self.motor_position %
-                                                 len(Module.STEP_PATTERN)]
+                                                  len(Module.STEP_PATTERN)]
             self.force_rotation = False
             self.motor_position += 1
             self.total_steps += 1
