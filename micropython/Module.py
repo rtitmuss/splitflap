@@ -71,6 +71,12 @@ class Module:
     def is_stopped(self):
         return self.motor_pins == 0
 
+    def steps_to_rotate(self):
+        if self.motor_position <= self.letter_position:
+            return self.letter_position - self.motor_position
+        else:
+            return Module.STEPS_PER_REVOLUTION - self.motor_position + self.letter_position
+
     def is_panic(self):
         return self.panic_error
 

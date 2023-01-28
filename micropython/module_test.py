@@ -2,19 +2,21 @@ import unittest
 
 from module import Module
 
+HOME_PIN_ACTIVE = 1
+
 
 class TestModuleMethods(unittest.TestCase):
 
     def setUp(self):
-        self.module = Module()
+        self.module = Module(HOME_PIN_ACTIVE)
 
     def run_task_until_motor_stopped(self,
                                      home_pin_range=range(0, 0),
                                      limit=Module.STEPS_PER_REVOLUTION * 2):
         motor_pins = []
         while len(motor_pins) < limit:
-            self.module.set_home_pin(Module.HOME_PIN_ACTIVE if len(
-                motor_pins) in home_pin_range else ~Module.HOME_PIN_ACTIVE)
+            self.module.set_home_pin(HOME_PIN_ACTIVE if len(motor_pins) in
+                                     home_pin_range else ~HOME_PIN_ACTIVE)
             self.module.task()
 
             motor_pins.append(self.module.get_motor_pins())
@@ -74,7 +76,7 @@ class TestModuleMethods(unittest.TestCase):
         self.module.rotate_to_letter('a')
         motor_pins = self.run_task_until_motor_stopped(limit=8)
 
-        self.assertEqual(motor_pins, [6, 12, 9, 3, 6, 12, 9, 3])
+        self.assertEqual(motor_pins, [3, 9, 12, 6, 3, 9, 12, 6])
 
     def test_rotate_no_home(self):
         self.module.rotate_to_letter('a')
