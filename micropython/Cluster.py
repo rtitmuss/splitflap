@@ -23,6 +23,9 @@ class Cluster:
         for module in self.module_list:
             module.step()
 
+    def num_modules(self):
+        return len(self.module_list)
+
     def is_any_panic(self):
         return any(map(lambda x: x.is_panic(), self.module_list))
 

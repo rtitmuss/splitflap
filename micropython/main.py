@@ -1,5 +1,5 @@
-from machine import Pin
-import time
+from machine import Pin, Timer, UART
+import select
 
 from Cluster import Cluster
 from ModuleGpio import ModuleGpio
@@ -9,9 +9,28 @@ cluster = Cluster(
     [
         ModuleGpio(2, 28, 27, 26, 22, 1),
         #    ModuleGpio(14, 18, 19, 20, 21, 0),
-        ModuleGpio(1, 9, 8, 7, 6, 0),
+        #ModuleGpio(1, 9, 8, 7, 6, 0),
         #    ModuleGpio(15, 10, 11, 12, 13, 1)
     ])
+
+uart_input = UART(1,
+                  baudrate=38400,
+                  tx=Pin(4, Pin.IN, Pin.PULL_UP),
+                  rx=Pin(5, Pin.OUT, Pin.PULL_UP))
+uart_output = UART(0,
+                   baudrate=38400,
+                   tx=Pin(16, Pin.IN, Pin.PULL_UP),
+                   rx=Pin(17, Pin.OUT, Pin.PULL_UP))
+
+led = machine.Pin("LED", machine.Pin.OUT)
+
+
+def blink(timer):
+    led.toggle()
+
+
+timer = Timer()
+timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
 
 test_chars = list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") + list(
     reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
@@ -23,16 +42,45 @@ test_words = [
 ]
 
 #message = list(map(lambda s: s * num_modules, test_chars))
-message = test_words
-message_idx = 0
+queue = 100 * test_words
+
+
+def uart_read_line(uart):
+    buf = bytearray()
+    while True:
+        c = uart.read(1)
+        if c:
+            buf = buf + c
+            if c == b'\n':
+                return buf.decode('ascii')
+
+
+poller = select.poll()
+poller.register(uart_input, select.POLLIN)
 
 while True:
-    print('rotate to {}'.format(message[message_idx]))
+    for sock, event in poller.ipoll(1000):
+        if event and select.POLLIN:
+            if sock == uart_input:
+                letters = uart_read_line(uart_input)
+                queue.insert(0, letters)
 
-    cluster.set_letters(message[message_idx])
+    if not queue:
+        continue
+
+    letters = queue.pop(0).strip()
+    letters_overflow = letters[cluster.num_modules():]
+
+    print('letters: ', letters, letters_overflow)
+
+    if letters_overflow:
+        uart_output.write('{}\n'.format(letters_overflow))
+
+    cluster.set_letters(letters)
     max_steps = cluster.steps_to_rotate()
     cluster.rotate_until_stopped(max_steps)
 
-    message_idx = (message_idx + 1) % len(message)
+    if letters_overflow:
+        uart_read_line(uart_output)
 
-    time.sleep(1)
+    uart_input.write('ok\n')
