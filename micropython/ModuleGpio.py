@@ -35,3 +35,10 @@ class ModuleGpio:
 
     def is_stopped(self):
         return self.state.is_stopped()
+
+    def get_status(self):
+        if self.state.is_panic():
+            return 'p'
+        if self.state.is_stopped():
+            return '_'
+        return '|'

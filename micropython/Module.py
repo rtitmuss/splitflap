@@ -72,6 +72,9 @@ class Module:
         return self.motor_pins == 0
 
     def steps_to_rotate(self):
+        if self.panic_error:
+            return 0
+
         if self.motor_position <= self.letter_position:
             return self.letter_position - self.motor_position
         else:

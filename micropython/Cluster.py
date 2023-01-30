@@ -26,14 +26,14 @@ class Cluster:
     def num_modules(self):
         return len(self.module_list)
 
-    def is_any_panic(self):
-        return any(map(lambda x: x.is_panic(), self.module_list))
-
     def is_all_stopped(self):
         return all(map(lambda x: x.is_stopped(), self.module_list))
 
     def steps_to_rotate(self):
         return max(map(lambda x: x.steps_to_rotate(), self.module_list))
+
+    def get_status(self):
+        return ''.join(map(lambda x: x.get_status(), self.module_list))
 
     def set_letters(self, string):
         for module, letter in zip(self.module_list, string):
@@ -48,7 +48,7 @@ class Cluster:
             self.__task(max_steps)
             max_steps -= 1
 
-            if self.is_all_stopped() or self.is_any_panic():
+            if self.is_all_stopped():
                 break
 
             now_us = time.ticks_us()
