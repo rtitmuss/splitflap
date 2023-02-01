@@ -18,17 +18,17 @@ cluster = Cluster(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(15, 10, 11, 12, 13, 1)
 ])
 
-uart_input = UART(1,
+uart_input = UART(0,
                   baudrate=38400,
-                  tx=Pin(4, Pin.IN, Pin.PULL_UP),
-                  rx=Pin(5, Pin.OUT, Pin.PULL_UP),
+                  tx=Pin(16, Pin.IN, Pin.PULL_UP),
+                  rx=Pin(17, Pin.OUT),
                   timeout=1000,
                   timeout_char=100)
 uart_output = UART(
-    0,
+    1,
     baudrate=38400,
-    tx=Pin(16, Pin.IN, Pin.PULL_UP),
-    rx=Pin(17, Pin.OUT, Pin.PULL_UP),
+    tx=Pin(4, Pin.IN, Pin.PULL_UP),
+    rx=Pin(5, Pin.OUT),
     timeout=4000,  # allow for full rotation of a module
     timeout_char=100)
 
