@@ -5,6 +5,12 @@ from time import ticks_diff, ticks_ms
 from Cluster import Cluster
 from ModuleGpio import ModuleGpio
 
+picow = True
+try:
+    import network
+except ImportError:
+    picow = False
+
 cluster = Cluster(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(2, 28, 27, 26, 22, 1),
     ModuleGpio(14, 18, 19, 20, 21, 0),
@@ -48,7 +54,7 @@ test_words = list(
     ]))
 
 #message = list(map(lambda s: s * num_modules, test_chars))
-queue = 100 * test_words
+queue = 100 * test_words if picow else []
 
 
 def uart_readline(uart):
@@ -62,32 +68,36 @@ poller = select.poll()
 poller.register(uart_input, select.POLLIN)
 
 while True:
-    for sock, event in poller.ipoll(1000):
-        if event and select.POLLIN:
-            if sock == uart_input:
-                letters = uart_readline(uart_input)
-                if letters:
-                    queue.insert(0, letters)
+    try:
+        for sock, event in poller.ipoll(1000):
+            if event and select.POLLIN:
+                if sock == uart_input:
+                    letters = uart_readline(uart_input)
+                    if letters:
+                        queue.insert(0, letters)
 
-    if not queue:
-        continue
+        if not queue:
+            continue
 
-    letters = queue.pop(0)
-    letters_overflow = letters[cluster.num_modules():]
-    print('letters: ', letters, letters_overflow)
+        letters = queue.pop(0)
+        letters_overflow = letters[cluster.num_modules():]
+        print('letters: ', letters, letters_overflow)
 
-    if letters_overflow:
-        uart_output.write('{}\n'.format(letters_overflow))
+        if letters_overflow:
+            uart_output.write('{}\n'.format(letters_overflow))
 
-    cluster.set_letters(letters)
-    max_steps = cluster.steps_to_rotate()
-    cluster.rotate_until_stopped(max_steps)
+        cluster.set_letters(letters)
+        max_steps = cluster.steps_to_rotate()
 
-    status = cluster.get_status()
-    start = ticks_ms()
+        cluster.rotate_until_stopped(max_steps)
 
-    if letters_overflow:
-        status = '{},{}'.format(status, uart_readline(uart_output) or '?')
+        status = cluster.get_status()
+        start = ticks_ms()
 
-    print('status', status, ticks_diff(ticks_ms(), start))
-    uart_input.write('{}\n'.format(status))
+        if letters_overflow:
+            status = '{},{}'.format(status, uart_readline(uart_output) or '?')
+
+        print('status:', status, ticks_diff(ticks_ms(), start))
+        uart_input.write('{}\n'.format(status))
+    except Exception as e:
+        print('Exception:', e)
