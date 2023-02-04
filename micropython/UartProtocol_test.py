@@ -5,7 +5,7 @@ from UartProtocol import UartProtocol
 
 class MockUart:
 
-    def __init__(self, buf=None):
+    def set_buf(self, buf):
         self.buf = buf
         self.pos = 0
 
@@ -24,101 +24,113 @@ class MockUart:
 class TestUartProtocol(unittest.TestCase):
 
     def setUp(self):
-        self.uartProtocol = UartProtocol()
-
-    def test_write_frame(self):
-        self.assertEqual(self.uartProtocol.write_frame(b'a'), b'\x7ea\x7e')
-
-    def test_write_frame_with_esc(self):
-        self.assertEqual(self.uartProtocol.write_frame(b'a\x7eb\x7e'),
-                         b'\x7ea\x7d\x7eb\x7d\x7e\x7e')
+        self.mock_uart = MockUart()
+        self.uartProtocol = UartProtocol(self.mock_uart)
 
     def test_write(self):
+        self.assertEqual(self.uartProtocol.write(b'a'), b'\x7ea\x7e')
+
+    def test_writewith_esc(self):
+        self.assertEqual(self.uartProtocol.write(b'a\x7eb\x7e'),
+                         b'\x7ea\x7d\x7eb\x7d\x7e\x7e')
+
+    def test_write_frame(self):
         self.assertEqual(
-            self.uartProtocol.write(UartProtocol.CMD_SET, 2, 'foo'),
-            b'~\x01\x02foo\x95\xbb~')
+            self.uartProtocol.write_frame(UartProtocol.CMD_SET, 2, 1000,
+                                          'foo'),
+            b'~\x01\x02\x00\x00\xe8\x03\x00\x00fooF,~')
 
     def test_uart_write(self):
-        mock_uart = MockUart()
-        self.uartProtocol.uart_write(mock_uart, UartProtocol.CMD_SET, 2, 'foo')
-        self.assertEqual(mock_uart.buf, b'~\x01\x02foo\x95\xbb~')
+        self.uartProtocol.uart_write(UartProtocol.CMD_SET, 2, 1000, 'foo')
+        self.assertEqual(self.mock_uart.buf,
+                         b'~\x01\x02\x00\x00\xe8\x03\x00\x00fooF,~')
+
+    def test_read(self):
+        read = self.uartProtocol.read()
+
+        self.assertEqual(read.send(b'\x7e'), None)
+        self.assertEqual(read.send(b'a'), None)
+        self.assertEqual(read.send(b'\x7e'), b'a')
+
+    def test_read_with_esc(self):
+        read = self.uartProtocol.read()
+
+        self.assertEqual(read.send(b'\x7e'), None)
+        self.assertEqual(read.send(b'a'), None)
+        self.assertEqual(read.send(b'\x7d'), None)
+        self.assertEqual(read.send(b'\x7e'), None)
+        self.assertEqual(read.send(b'b'), None)
+        self.assertEqual(read.send(b'\x7d'), None)
+        self.assertEqual(read.send(b'\x7e'), None)
+        self.assertEqual(read.send(b'\x7e'), b'a\x7eb\x7e')
+
+    def test_read_sync(self):
+        read = self.uartProtocol.read()
+
+        self.assertEqual(read.send(b'b'), None)
+        self.assertEqual(read.send(b'\x7e'), None)
+        self.assertEqual(read.send(b'a'), None)
+        self.assertEqual(read.send(b'\x7e'), b'a')
 
     def test_read_frame(self):
         read_frame = self.uartProtocol.read_frame()
 
-        self.assertEqual(read_frame.send(b'\x7e'), None)
-        self.assertEqual(read_frame.send(b'a'), None)
-        self.assertEqual(read_frame.send(b'\x7e'), b'a')
-
-    def test_read_frame_with_esc(self):
-        read_frame = self.uartProtocol.read_frame()
-
-        self.assertEqual(read_frame.send(b'\x7e'), None)
-        self.assertEqual(read_frame.send(b'a'), None)
-        self.assertEqual(read_frame.send(b'\x7d'), None)
-        self.assertEqual(read_frame.send(b'\x7e'), None)
-        self.assertEqual(read_frame.send(b'b'), None)
-        self.assertEqual(read_frame.send(b'\x7d'), None)
-        self.assertEqual(read_frame.send(b'\x7e'), None)
-        self.assertEqual(read_frame.send(b'\x7e'), b'a\x7eb\x7e')
-
-    def test_read_frame_sync(self):
-        read_frame = self.uartProtocol.read_frame()
-
-        self.assertEqual(read_frame.send(b'b'), None)
-        self.assertEqual(read_frame.send(b'\x7e'), None)
-        self.assertEqual(read_frame.send(b'a'), None)
-        self.assertEqual(read_frame.send(b'\x7e'), b'a')
-
-    def test_read(self):
-        read = self.uartProtocol.read()
-
-        for c in b'~\x01\x02foo\x95\xbb~':
-            frame = read.send(bytes([c]))
+        for c in b'~\x01\x02\x00\x00\xe8\x03\x00\x00fooF,~':
+            frame = read_frame.send(bytes([c]))
 
         self.assertEqual(frame.cmd, UartProtocol.CMD_SET)
         self.assertEqual(frame.seq, 2)
+        self.assertEqual(frame.steps, 1000)
         self.assertEqual(frame.letters, b'foo')
 
-    def test_read(self):
-        read = self.uartProtocol.read()
+    def test_read_frame_crc_error(self):
+        read_frame = self.uartProtocol.read_frame()
+
+        for c in b'~\x01\x02\x00\x00\xe8\x03\x00\x00fooFx~':
+            frame = read_frame.send(bytes([c]))
+
+        self.assertEqual(frame, None)
+
+    def test_read_invalid_frame(self):
+        read_frame = self.uartProtocol.read_frame()
 
         for c in b'~\x01\x02foo\x95\xcb~':
-            frame = read.send(bytes([c]))
+            frame = read_frame.send(bytes([c]))
 
         self.assertEqual(frame, None)
 
     def test_uart_read(self):
-        mock_uart = MockUart(b'~\x01\x02foo\x95\xbb~')
-        frame = self.uartProtocol.uart_read(mock_uart)
+        self.mock_uart.set_buf(b'~\x01\x02\x00\x00\xe8\x03\x00\x00fooF,~')
+        frame = self.uartProtocol.uart_read()
 
         self.assertEqual(frame.cmd, UartProtocol.CMD_SET)
         self.assertEqual(frame.seq, 2)
+        self.assertEqual(frame.steps, 1000)
         self.assertEqual(frame.letters, b'foo')
 
     def test_uart_read_cmd(self):
-        mock_uart = MockUart(b'~\x01\x02foo\x95\xbb~~\x02\x03barU\xef~')
-        frame = self.uartProtocol.uart_read(mock_uart,
-                                            cmd=UartProtocol.CMD_ACK)
+        self.mock_uart.set_buf(
+            b'~\x02\x03\x00\x00\xe8\x03\x00\x00bar\x9d\x05~')
+        frame = self.uartProtocol.uart_read(cmd=UartProtocol.CMD_ACK)
 
         self.assertEqual(frame.cmd, UartProtocol.CMD_ACK)
 
     def test_uart_read_cmd_not_found(self):
-        mock_uart = MockUart(b'~\x01\x02foo\x95\xbb~~\x02\x03barU\xef~')
-        frame = self.uartProtocol.uart_read(mock_uart,
-                                            cmd=UartProtocol.CMD_END)
+        self.mock_uart.set_buf(b'~\x01\x02\x00\x00\xe8\x03\x00\x00fooF,~')
+        frame = self.uartProtocol.uart_read(cmd=UartProtocol.CMD_END)
 
         self.assertEqual(frame, None)
 
     def test_uart_read_seq(self):
-        mock_uart = MockUart(b'~\x01\x02foo\x95\xbb~~\x02\x03barU\xef~')
-        frame = self.uartProtocol.uart_read(mock_uart, seq=3)
+        self.mock_uart.set_buf(
+            b'~\x02\x03\x00\x00\xe8\x03\x00\x00bar\x9d\x05~')
+        frame = self.uartProtocol.uart_read(seq=3)
 
         self.assertEqual(frame.seq, 3)
 
     def test_uart_read_seq_not_found(self):
-        mock_uart = MockUart(b'~\x01\x02foo\x95\xbb~~\x02\x03barU\xef~')
-        frame = self.uartProtocol.uart_read(mock_uart, seq=4)
+        self.mock_uart.set_buf(b'~\x01\x02\x00\x00\xe8\x03\x00\x00fooF,~')
+        frame = self.uartProtocol.uart_read(seq=4)
 
         self.assertEqual(frame, None)
 

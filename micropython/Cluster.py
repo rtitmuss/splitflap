@@ -29,7 +29,7 @@ class Cluster:
     def is_all_stopped(self):
         return all(map(lambda x: x.is_stopped(), self.module_list))
 
-    def steps_to_rotate(self):
+    def get_max_steps(self):
         return max(map(lambda x: x.steps_to_rotate(), self.module_list))
 
     def get_status(self):
@@ -48,7 +48,7 @@ class Cluster:
             self.__task(max_steps)
             max_steps -= 1
 
-            if self.is_all_stopped():
+            if max_steps <= 0 and self.is_all_stopped():
                 break
 
             now_us = time.ticks_us()

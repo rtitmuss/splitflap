@@ -1,15 +1,16 @@
 from collections import namedtuple
 from crc16 import crc16
+import select
 import struct
 import uctypes
 
 SYNC = const(0x7e)
 ESC = const(0x7d)
 
-HDR_FMT = const('BB')
+HDR_FMT = const('BBI')
 CRC_FMT = const('H')
 
-Frame = namedtuple("Frame", ("cmd", "seq", "letters"))
+Frame = namedtuple("Frame", ("cmd", "seq", "steps", "letters"))
 
 
 def coroutine(func):
@@ -37,20 +38,28 @@ class UartProtocol:
     CMD_ACK = 0x02
     CMD_END = 0x03
 
-    def write_frame(self, buf):
+    def __init__(self, uart):
+        self.uart = uart
+        self.poll = select.poll()
+        try:
+            self.poll.register(uart, select.POLLIN)
+        except OSError:
+            True  # unit test
+
+    def write(self, buf):
         return bytes(__wrap(buf))
 
-    def write(self, cmd, seq, letters):
-        buf = bytearray(struct.pack(HDR_FMT, cmd, seq))
-        buf.extend(letters)
+    def write_frame(self, *args):
+        buf = bytearray(struct.pack(HDR_FMT, *args[0:-1]))
+        buf.extend(args[-1])
         buf.extend(struct.pack(CRC_FMT, crc16(buf)))
-        return self.write_frame(buf)
+        return self.write(buf)
 
-    def uart_write(self, uart, *args):
-        return uart.write(self.write(*args))
+    def uart_write(self, *args):
+        return self.uart.write(self.write_frame(*args))
 
     @coroutine
-    def read_frame(self):
+    def read(self):
         frame = None
         while True:
             byte = yield frame
@@ -68,11 +77,11 @@ class UartProtocol:
                     buf += byte
 
     @coroutine
-    def read(self):
+    def read_frame(self):
         hdr_size = struct.calcsize(HDR_FMT)
         crc_size = struct.calcsize(CRC_FMT)
 
-        reader = self.read_frame()
+        reader = self.read()
         byte = yield None
         while True:
             frame = reader.send(byte)
@@ -87,15 +96,22 @@ class UartProtocol:
             else:
                 byte = yield None
 
-    def uart_read(self, uart, cmd=None, seq=None, timeout=0):
-        read = self.read()
+    def uart_read(self, cmd=None, seq=None, timeout_ms=None):
+        read_frame = self.read_frame()
 
         while True:
-            byte = uart.read(1)
-            if not byte:
-                return  # timeout
+            if timeout_ms:
+                if not self.poll.poll(timeout_ms):
+                    return  # frame timeout
 
-            frame = read.send(byte)
-            if frame and (cmd == None or cmd
-                          == frame.cmd) and (seq == None or seq == frame.seq):
-                return frame
+            byte = self.uart.read(1)
+            if not byte:
+                return  # char timeout
+
+            frame = read_frame.send(byte)
+            if frame:
+                if (cmd == None or cmd == frame.cmd) and (seq == None
+                                                          or seq == frame.seq):
+                    return frame
+                else:
+                    print('Unexpected frame:', frame)

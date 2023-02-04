@@ -1,6 +1,7 @@
 import gc
 from machine import Pin, Timer, UART
 import select
+import sys
 from time import ticks_diff, ticks_ms
 
 from Cluster import Cluster
@@ -20,16 +21,16 @@ cluster = Cluster(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(15, 10, 11, 12, 13, 1)
 ])
 
-uart_input = UART(0,
-                  baudrate=38400,
-                  tx=Pin(16, Pin.IN, Pin.PULL_UP),
-                  rx=Pin(17, Pin.OUT),
-                  timeout=100)
-uart_output = UART(1,
-                   baudrate=38400,
-                   tx=Pin(4, Pin.IN, Pin.PULL_UP),
-                   rx=Pin(5, Pin.OUT),
-                   timeout=100)
+TIMEOUT_MS = const(100)
+
+uart_input = UartProtocol(
+    UART(0,
+         baudrate=38400,
+         tx=Pin(16, Pin.IN, Pin.PULL_UP),
+         rx=Pin(17, Pin.OUT)))
+uart_output = UartProtocol(
+    UART(1, baudrate=38400, tx=Pin(4, Pin.IN, Pin.PULL_UP), rx=Pin(5,
+                                                                   Pin.OUT)))
 
 led = machine.Pin("LED", machine.Pin.OUT)
 
@@ -55,13 +56,8 @@ test_words = list(
 #message = list(map(lambda s: s * num_modules, test_chars))
 queue = 100 * test_words if picow else []
 
-uart_protocol = UartProtocol()
-
 poll = select.poll()
-poll.register(uart_input, select.POLLIN)
-
-poll_uart_output = select.poll()
-poll_uart_output.register(uart_output, select.POLLIN)
+poll.register(uart_input.uart, select.POLLIN)
 
 seq_in = 0
 seq_out = 0
@@ -70,48 +66,53 @@ while True:
     try:
         gc.collect()
 
+        max_steps_in = 0  # Todo add to queue
+
         for sock, event in poll.ipoll(1000):
             if event and select.POLLIN:
-                if sock == uart_input:
-                    frame = uart_protocol.uart_read(uart_input,
-                                                    UartProtocol.CMD_SET)
+                if sock == uart_input.uart:
+                    frame = uart_input.uart_read(UartProtocol.CMD_SET)
                     if frame:
                         seq_in = frame.seq
                         queue = [frame.letters.decode('ascii')]
+                        max_steps_in = frame.steps
 
         if not queue:
             continue
 
+        gc.collect()
+        print('mem_free:', gc.mem_free())
+
+        seq_out += 1
+
         letters = queue.pop(0)
         letters_overflow = letters[cluster.num_modules():]
-        print('letters: ', letters, letters_overflow)
-
-        if letters_overflow:
-            uart_protocol.uart_write(uart_output, UartProtocol.CMD_SET,
-                                     seq_out, letters_overflow)
+        print('letters:', letters, letters_overflow)
 
         cluster.set_letters(letters)
-        max_steps = cluster.steps_to_rotate()
+        max_steps = max([cluster.get_max_steps(), max_steps_in])
+
+        if letters_overflow:
+            uart_output.uart_write(UartProtocol.CMD_SET, seq_out, max_steps,
+                                   letters_overflow)
+
+            frame = uart_output.uart_read(UartProtocol.CMD_ACK, seq_out,
+                                          TIMEOUT_MS)
+            if frame:
+                max_steps = frame.steps
+
+        uart_input.uart_write(UartProtocol.CMD_ACK, seq_in, max_steps, '')
 
         cluster.rotate_until_stopped(max_steps)
 
         status = cluster.get_status()
-        start = ticks_ms()
 
         if letters_overflow:
-            # timeout 4s to allow for full rotation of a module
-            if poll_uart_output.poll(4000):
-                frame = uart_protocol.uart_read(uart_output,
-                                                UartProtocol.CMD_END, seq_out)
-                status = '{},{}'.format(status,
-                                        frame.letters if frame else '?')
-            else:
-                status = '{},!'.format(status)
+            frame = uart_output.uart_read(UartProtocol.CMD_END, seq_out,
+                                          TIMEOUT_MS)
+            status = '{},{}'.format(status, frame.letters if frame else '?')
 
-        print('status:', status, 'mem_free:', gc.mem_free(), 'ticks',
-              ticks_diff(ticks_ms(), start))
-        uart_protocol.uart_write(uart_input, UartProtocol.CMD_END, seq_in,
-                                 status)
-        seq_out += 1
+        print('status:', status)
+        uart_input.uart_write(UartProtocol.CMD_END, seq_in, 0, status)
     except Exception as e:
-        print('Exception:', e)
+        sys.print_exception(e)
