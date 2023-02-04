@@ -27,10 +27,14 @@ uart_input = UartProtocol(
     UART(0,
          baudrate=38400,
          tx=Pin(16, Pin.IN, Pin.PULL_UP),
-         rx=Pin(17, Pin.OUT)))
+         rx=Pin(17, Pin.OUT, Pin.PULL_UP),
+         timeout=10))
 uart_output = UartProtocol(
-    UART(1, baudrate=38400, tx=Pin(4, Pin.IN, Pin.PULL_UP), rx=Pin(5,
-                                                                   Pin.OUT)))
+    UART(1,
+         baudrate=38400,
+         tx=Pin(4, Pin.IN, Pin.PULL_UP),
+         rx=Pin(5, Pin.OUT, Pin.PULL_UP),
+         timeout=10))
 
 led = machine.Pin("LED", machine.Pin.OUT)
 
