@@ -21,7 +21,7 @@ cluster = Cluster(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(15, 10, 11, 12, 13, 1)
 ])
 
-TIMEOUT_MS = const(100)
+TIMEOUT_MS = const(200)
 
 uart_input = UartProtocol(
     UART(0,
