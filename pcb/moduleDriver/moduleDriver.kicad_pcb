@@ -5099,7 +5099,7 @@
   (gr_text "v1" (at 130.446 128.838125) (layer "F.SilkS") (tstamp 2eec5648-30a9-405d-ae40-0b5b7840038f)
     (effects (font (size 1.1 1.1) (thickness 0.15)))
   )
-  (gr_text "OUTPUT" (at 132.1308 81.305401 90) (layer "F.SilkS") (tstamp 5e7b5158-b964-40b5-95d5-3fb2f5ba1510)
+  (gr_text "INPUT" (at 132.1308 81.305401 90) (layer "F.SilkS") (tstamp 5e7b5158-b964-40b5-95d5-3fb2f5ba1510)
     (effects (font (size 1.1 1.1) (thickness 0.15)))
   )
   (gr_text "MODULE2" (at 133.1976 72.648751 90) (layer "F.SilkS") (tstamp 5f2bea8d-c9ac-4ffa-8f8c-524ccc3811db)
@@ -5123,7 +5123,7 @@
   (gr_text "https://github.com/rtitmuss/splitflap" (at 114.4016 85.3948) (layer "F.SilkS") (tstamp b49e47fc-b1c3-4b1f-82ac-3dbe8c54a505)
     (effects (font (size 1.1 1.1) (thickness 0.15)))
   )
-  (gr_text "INPUT" (at 91.0336 119.126001 90) (layer "F.SilkS") (tstamp daa17a02-19e3-4dac-9a10-cb848bae6c4b)
+  (gr_text "OUTPUT" (at 91.0336 119.126001 90) (layer "F.SilkS") (tstamp daa17a02-19e3-4dac-9a10-cb848bae6c4b)
     (effects (font (size 1.1 1.1) (thickness 0.15)))
   )
 
