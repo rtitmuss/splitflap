@@ -1,5 +1,7 @@
 import gc
 from machine import Pin, Timer, UART
+from neopixel import NeoPixel
+import random
 import select
 import sys
 from time import ticks_diff, ticks_ms
@@ -20,6 +22,19 @@ cluster = Cluster(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(1, 9, 8, 7, 6, 0),
     ModuleGpio(15, 10, 11, 12, 13, 1)
 ])
+
+
+# invert neopixel data as a logic inverter is used to boost to 5v
+class InvertedNeoPixel(NeoPixel):
+
+    def write(self):
+        for i in range(len(self.buf)):
+            self.buf[i] = ~self.buf[i]
+        super().write()
+        self.pin.high()
+
+
+neopixel = InvertedNeoPixel(Pin(0), 1)
 
 BAUDRATE = const(19200)
 UART_CHAR_TIMEOUT_MS = const(10)
@@ -108,6 +123,10 @@ while True:
                 max_steps = frame.steps
 
         uart_input.uart_write(UartProtocol.CMD_ACK, seq_in, max_steps, '')
+
+        neopixel.fill((random.randint(0, 255), random.randint(0, 255),
+                       random.randint(0, 255)))
+        neopixel.write()
 
         cluster.rotate_until_stopped(max_steps)
 
