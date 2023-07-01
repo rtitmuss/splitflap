@@ -15,23 +15,24 @@ except ImportError:
     picow = False
 
 cluster = Cluster(Pin(3, Pin.OUT, value=0), [
-    ModuleGpio(2, 28, 27, 26, 22, 1),
+    ModuleGpio(2, 28, 27, 26, 22, 0),
     ModuleGpio(14, 18, 19, 20, 21, 0),
     ModuleGpio(1, 9, 8, 7, 6, 0),
     ModuleGpio(15, 10, 11, 12, 13, 1)
 ])
 
+BAUDRATE = const(19200)
 TIMEOUT_MS = const(200)
 
 uart_input = UartProtocol(
     UART(0,
-         baudrate=38400,
+         baudrate=BAUDRATE,
          tx=Pin(16, Pin.IN, Pin.PULL_UP),
          rx=Pin(17, Pin.OUT, Pin.PULL_UP),
          timeout=10))
 uart_output = UartProtocol(
     UART(1,
-         baudrate=38400,
+         baudrate=BAUDRATE,
          tx=Pin(4, Pin.IN, Pin.PULL_UP),
          rx=Pin(5, Pin.OUT, Pin.PULL_UP),
          timeout=10))
@@ -51,7 +52,7 @@ test_chars = list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") + list(
 
 # todo: duplicate letters until I have printed more modules
 test_words = list(
-    map(lambda x: ''.join([char * 4 for char in x]), [
+    map(lambda x: ''.join([char * 8 for char in x]), [
         "in", "of", "to", "is", "it", "on", "no", "us", "at", "un", "go", "an",
         "my", "up", "me", "as", "he", "we", "so", "be", "by", "or", "do", "if",
         "hi", "bi", "ex", "ok", "18", "21", "99", "$$", "&&", "##"
