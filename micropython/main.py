@@ -22,20 +22,21 @@ cluster = Cluster(Pin(3, Pin.OUT, value=0), [
 ])
 
 BAUDRATE = const(19200)
-TIMEOUT_MS = const(200)
+UART_CHAR_TIMEOUT_MS = const(10)
+UART_FRAME_TIMEOUT_MS = const(200)
 
 uart_input = UartProtocol(
     UART(0,
          baudrate=BAUDRATE,
          tx=Pin(16, Pin.IN, Pin.PULL_UP),
          rx=Pin(17, Pin.OUT, Pin.PULL_UP),
-         timeout=10))
+         timeout=UART_CHAR_TIMEOUT_MS))
 uart_output = UartProtocol(
     UART(1,
          baudrate=BAUDRATE,
          tx=Pin(4, Pin.IN, Pin.PULL_UP),
          rx=Pin(5, Pin.OUT, Pin.PULL_UP),
-         timeout=10))
+         timeout=UART_CHAR_TIMEOUT_MS))
 
 led = machine.Pin("LED", machine.Pin.OUT)
 
@@ -102,7 +103,7 @@ while True:
                                    letters_overflow)
 
             frame = uart_output.uart_read(UartProtocol.CMD_ACK, seq_out,
-                                          TIMEOUT_MS)
+                                          UART_FRAME_TIMEOUT_MS)
             if frame:
                 max_steps = frame.steps
 
@@ -114,7 +115,7 @@ while True:
 
         if letters_overflow:
             frame = uart_output.uart_read(UartProtocol.CMD_END, seq_out,
-                                          TIMEOUT_MS)
+                                          UART_FRAME_TIMEOUT_MS)
             status = '{},{}'.format(status, frame.letters if frame else '?')
 
         print('status:', status)
