@@ -4,7 +4,7 @@ import time
 
 class Cluster:
 
-    MAX_RPM = 15  # (max rpm 15)
+    MAX_RPM = 12  # (max rpm 15)
 
     # 1 / (15 max_rpm / 60 sec * 2048 steps)= ~1953ms
     STEP_INTERVAL_US = math.floor((1 / (MAX_RPM / 60 * 2048)) * 1000000)
