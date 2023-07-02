@@ -4,7 +4,7 @@ from neopixel import NeoPixel
 import random
 import select
 import sys
-from time import ticks_diff, ticks_ms
+from time import sleep, ticks_diff, ticks_ms
 
 from Cluster import Cluster
 from ModuleGpio import ModuleGpio
@@ -22,6 +22,11 @@ cluster = Cluster(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(1, 9, 8, 7, 6),
     ModuleGpio(15, 10, 11, 12, 13, hall_sensor_active=1)
 ])
+
+# physical module order when displaying alphabet
+display_order = 'bdacef'
+
+display_indices = list(map(lambda x: ord(x) - ord('a'), display_order))
 
 
 # invert neopixel data as a logic inverter is used to boost to 5v
@@ -53,6 +58,15 @@ uart_output = UartProtocol(
          rx=Pin(5, Pin.OUT, Pin.PULL_UP),
          timeout=UART_CHAR_TIMEOUT_MS))
 
+
+def reorder_letters(letters, indices):
+    reordered_letters = [' '] * len(indices)
+    for i, index in enumerate(indices):
+        if i < len(letters):
+            reordered_letters[index] = letters[i]
+    return ''.join(reordered_letters)
+
+
 led = machine.Pin("LED", machine.Pin.OUT)
 
 
@@ -67,12 +81,13 @@ test_chars = list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") + list(
     reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
 
 # todo: duplicate letters until I have printed more modules
-test_words = list(
-    map(lambda x: ''.join([char * 8 for char in x]), [
-        "in", "of", "to", "is", "it", "on", "no", "us", "at", "un", "go", "an",
-        "my", "up", "me", "as", "he", "we", "so", "be", "by", "or", "do", "if",
-        "hi", "bi", "ex", "ok", "18", "21", "99", "$$", "&&", "##"
-    ]))
+test_words = list([
+    "abcdef", "Hello", "World", "Spirit", "Purple", "Marvel", "Garden",
+    "Future", "Breeze", "Strong", "Impact", "Wisest", "Choice", "Beauty",
+    "Potato", "Yellow", "Island", "Monkey", "Guitar", "Forest", "Mellow",
+    "Orbit", "Pepper", "874512", "365498", "720156", "935827", "$$$$$$",
+    "$#$#$#", "&&&&&&"
+])
 
 #message = list(map(lambda s: s * num_modules, test_chars))
 queue = 100 * test_words if picow else []
@@ -87,28 +102,28 @@ while True:
     try:
         gc.collect()
 
-        max_steps_in = 0  # Todo add to queue
+        if queue:
+            sleep(2)
+            letters = reorder_letters(queue.pop(0), display_indices)
+            max_steps_in = 0  # Todo add to queue
 
-        for sock, event in poll.ipoll(1000):
-            if event and select.POLLIN:
-                if sock == uart_input.uart:
-                    frame = uart_input.uart_read(UartProtocol.CMD_SET)
-                    if frame:
-                        seq_in = frame.seq
-                        queue = [frame.letters.decode('ascii')]
-                        max_steps_in = frame.steps
-
-        if not queue:
-            continue
+        else:
+            for sock, event in poll.ipoll():
+                if event and select.POLLIN:
+                    if sock == uart_input.uart:
+                        frame = uart_input.uart_read(UartProtocol.CMD_SET)
+                        if frame:
+                            seq_in = frame.seq
+                            letters = frame.letters.decode('ascii')
+                            max_steps_in = frame.steps
 
         gc.collect()
         print('mem_free:', gc.mem_free())
 
         seq_out += 1
 
-        letters = queue.pop(0)
         letters_overflow = letters[cluster.num_modules():]
-        print('letters:', letters, letters_overflow)
+        print('letters:', letters[:cluster.num_modules()], letters_overflow)
 
         cluster.set_letters(letters)
         max_steps = max([cluster.get_max_steps(), max_steps_in])
