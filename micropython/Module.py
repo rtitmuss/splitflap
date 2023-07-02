@@ -77,6 +77,8 @@ class Module:
         if self.panic_error:
             return 0
 
+        if self.motor_position == self.letter_position and self.force_rotation:
+            return Module.STEPS_PER_REVOLUTION
         if self.motor_position <= self.letter_position:
             return self.letter_position - self.motor_position
         else:
