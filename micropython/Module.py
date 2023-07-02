@@ -23,8 +23,9 @@ class Module:
         MOT_PHASE_C | MOT_PHASE_D, MOT_PHASE_D | MOT_PHASE_A
     ]
 
-    def __init__(self, home_pin_active=1):
-        self.home_pin_active = home_pin_active
+    def __init__(self, offset=0, hall_sensor_active=1):
+        self.offset = offset
+        self.hall_sensor_active = hall_sensor_active
 
         # True if error is detected
         self.panic_error = False
@@ -58,7 +59,8 @@ class Module:
         return math.ceil((index + 0.5) * Module.STEPS_PER_LETTER)
 
     def rotate_to_letter(self, letter):
-        self.letter_position = self.letter_to_position(letter)
+        self.letter_position = (self.letter_to_position(letter) +
+                                self.offset) % Module.STEPS_PER_REVOLUTION
         self.force_rotation = True
         self.total_letters += 1
 
@@ -101,7 +103,7 @@ class Module:
             raise ValueError('home_pin not set')
 
         if self.motor_pins:
-            if self.home_pin == self.home_pin_active:
+            if self.home_pin == self.hall_sensor_active:
                 self.count_home_steps += 1
                 self.max_count_home_steps = max(self.max_count_home_steps,
                                                 self.count_home_steps)

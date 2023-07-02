@@ -17,10 +17,10 @@ except ImportError:
     picow = False
 
 cluster = Cluster(Pin(3, Pin.OUT, value=0), [
-    ModuleGpio(2, 28, 27, 26, 22, 0),
-    ModuleGpio(14, 18, 19, 20, 21, 0),
-    ModuleGpio(1, 9, 8, 7, 6, 0),
-    ModuleGpio(15, 10, 11, 12, 13, 1)
+    ModuleGpio(2, 28, 27, 26, 22),
+    ModuleGpio(14, 18, 19, 20, 21, offset=44),
+    ModuleGpio(1, 9, 8, 7, 6),
+    ModuleGpio(15, 10, 11, 12, 13, hall_sensor_active=1)
 ])
 
 
@@ -34,7 +34,7 @@ class InvertedNeoPixel(NeoPixel):
         self.pin.high()
 
 
-neopixel = InvertedNeoPixel(Pin(0), 1)
+neopixel = InvertedNeoPixel(Pin(0), 2)
 
 BAUDRATE = const(19200)
 UART_CHAR_TIMEOUT_MS = const(10)

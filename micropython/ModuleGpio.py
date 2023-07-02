@@ -4,10 +4,17 @@ from Module import Module
 
 class ModuleGpio:
 
-    def __init__(self, sensor, motor_a, motor_b, motor_c, motor_d,
-                 sensor_active):
-        self.state = Module(home_pin_active=sensor_active)
-        self.sensor_pin = Pin(sensor, Pin.IN, Pin.PULL_UP)
+    def __init__(self,
+                 hall_sensor,
+                 motor_a,
+                 motor_b,
+                 motor_c,
+                 motor_d,
+                 offset=0,
+                 hall_sensor_active=0):
+        self.state = Module(offset=offset,
+                            hall_sensor_active=hall_sensor_active)
+        self.sensor_pin = Pin(hall_sensor, Pin.IN, Pin.PULL_UP)
         self.motor_pin = list(
             map(lambda x: Pin(x, Pin.OUT, value=0),
                 [motor_a, motor_b, motor_c, motor_d]))
