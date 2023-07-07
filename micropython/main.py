@@ -4,7 +4,7 @@ from neopixel import NeoPixel
 import random
 import select
 import sys
-from time import sleep, ticks_diff, ticks_ms
+from time import localtime, sleep, ticks_diff, ticks_ms
 
 from Cluster import Cluster
 from ModuleGpio import ModuleGpio
@@ -114,7 +114,24 @@ def read_queued_frame():
                      offsets=display_offsets)
 
 
-next_frame = read_queued_frame if is_picow else None
+def read_time_frame():
+    (year, month, mday, hour, minute, second, weekday, yearday) = localtime()
+    print("second", second)
+    sleep(60 - second)
+
+    (year, month, mday, hour, minute, second, weekday, yearday) = localtime()
+    letters = "{:02d}: {:02d}".format(hour, minute)
+    print(letters)
+
+    return UartFrame(UartProtocol.CMD_SET,
+                     0,
+                     rpm=12,
+                     letters=''.join(reorder(letters, ' ', display_indices)),
+                     offsets=display_offsets)
+
+
+next_frame = read_time_frame if is_picow else None
+#next_frame = read_queued_frame if is_picow else None
 
 poll = select.poll()
 poll.register(uart_input.uart, select.POLLIN)
