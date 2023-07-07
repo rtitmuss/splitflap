@@ -10,23 +10,24 @@ from Cluster import Cluster
 from ModuleGpio import ModuleGpio
 from UartProtocol import UartProtocol
 
-picow = True
+# physical module order when displaying alphabet
+#display_order = 'abcdefgh'
+display_order = 'febahgdc'
+
+display_indices = list(map(lambda x: ord(x) - ord('a'), display_order))
+
+is_picow = True
 try:
     import network
 except ImportError:
-    picow = False
+    is_picow = False
 
 cluster = Cluster(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(2, 28, 27, 26, 22),
-    ModuleGpio(14, 18, 19, 20, 21, offset=44),
+    ModuleGpio(14, 18, 19, 20, 21),
     ModuleGpio(1, 9, 8, 7, 6),
-    ModuleGpio(15, 10, 11, 12, 13, hall_sensor_active=1)
+    ModuleGpio(15, 10, 11, 12, 13)
 ])
-
-# physical module order when displaying alphabet
-display_order = 'bdacef'
-
-display_indices = list(map(lambda x: ord(x) - ord('a'), display_order))
 
 
 # invert neopixel data as a logic inverter is used to boost to 5v
@@ -41,19 +42,19 @@ class InvertedNeoPixel(NeoPixel):
 
 neopixel = InvertedNeoPixel(Pin(0), 2)
 
-BAUDRATE = const(19200)
+UART_BAUDRATE = const(19200)
 UART_CHAR_TIMEOUT_MS = const(10)
 UART_FRAME_TIMEOUT_MS = const(200)
 
 uart_input = UartProtocol(
     UART(0,
-         baudrate=BAUDRATE,
+         baudrate=UART_BAUDRATE,
          tx=Pin(16, Pin.IN, Pin.PULL_UP),
          rx=Pin(17, Pin.OUT, Pin.PULL_UP),
          timeout=UART_CHAR_TIMEOUT_MS))
 uart_output = UartProtocol(
     UART(1,
-         baudrate=BAUDRATE,
+         baudrate=UART_BAUDRATE,
          tx=Pin(4, Pin.IN, Pin.PULL_UP),
          rx=Pin(5, Pin.OUT, Pin.PULL_UP),
          timeout=UART_CHAR_TIMEOUT_MS))
@@ -77,20 +78,20 @@ def blink(timer):
 timer = Timer()
 timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
 
-test_chars = list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") + list(
-    reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
-
 # todo: duplicate letters until I have printed more modules
 test_words = list([
-    "abcdef", "Hello", "World", "Spirit", "Purple", "Marvel", "Garden",
-    "Future", "Breeze", "Strong", "Impact", "Wisest", "Choice", "Beauty",
-    "Potato", "Yellow", "Island", "Monkey", "Guitar", "Forest", "Mellow",
-    "Orbit", "Pepper", "874512", "365498", "720156", "935827", "$$$$$$",
-    "$#$#$#", "&&&&&&"
+    "abcdefgh", "Hi", "$#& ", "Hello", "World", "Spirit", "Purple", "Marvel",
+    "Garden", "Elephant", "Football", "Birthday", "Rainbow", "Keyboard",
+    "Necklace", "Positive", "Mountain", "Campaign", "Hospital", "Orbit",
+    "Pepper", "874512", "365498", "720156", "935827", "$$$$$$", "$#$#$#",
+    "&&&&&&"
 ])
 
-#message = list(map(lambda s: s * num_modules, test_chars))
-queue = 100 * test_words if picow else []
+test_chars = list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") + list(
+    reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
+#test_words = list(map(lambda s: s * len(display_order), test_chars))
+
+queue = 100 * test_words if is_picow else []
 
 poll = select.poll()
 poll.register(uart_input.uart, select.POLLIN)
