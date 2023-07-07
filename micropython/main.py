@@ -8,7 +8,7 @@ from time import sleep, ticks_diff, ticks_ms
 
 from Cluster import Cluster
 from ModuleGpio import ModuleGpio
-from UartProtocol import UartProtocol
+from UartProtocol import UartFrame, UartProtocol
 
 # physical module order when displaying alphabet
 #display_order = 'abcdefgh'
@@ -130,15 +130,19 @@ while True:
         max_steps = max([cluster.get_max_steps(), max_steps_in])
 
         if letters_overflow:
-            uart_output.uart_write(UartProtocol.CMD_SET, seq_out, max_steps,
-                                   letters_overflow)
+            uart_output.uart_write(
+                UartFrame(UartProtocol.CMD_SET,
+                          seq_out,
+                          steps=max_steps,
+                          letters=letters_overflow))
 
             frame = uart_output.uart_read(UartProtocol.CMD_ACK, seq_out,
                                           UART_FRAME_TIMEOUT_MS)
             if frame:
                 max_steps = frame.steps
 
-        uart_input.uart_write(UartProtocol.CMD_ACK, seq_in, max_steps, '')
+        uart_input.uart_write(
+            UartFrame(UartProtocol.CMD_ACK, seq_in, steps=max_steps))
 
         neopixel.fill((random.randint(0, 255), random.randint(0, 255),
                        random.randint(0, 255)))
@@ -154,6 +158,7 @@ while True:
             status = '{},{}'.format(status, frame.letters if frame else '?')
 
         print('status:', status)
-        uart_input.uart_write(UartProtocol.CMD_END, seq_in, 0, status)
+        uart_input.uart_write(
+            UartFrame(UartProtocol.CMD_END, seq_in, letters=status))
     except Exception as e:
         sys.print_exception(e)

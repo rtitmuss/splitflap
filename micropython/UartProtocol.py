@@ -13,6 +13,10 @@ CRC_FMT = const('H')
 Frame = namedtuple("Frame", ("cmd", "seq", "steps", "letters"))
 
 
+def UartFrame(cmd, seq, steps=0, letters=''):
+    return Frame(cmd, seq, steps, letters)
+
+
 def coroutine(func):
 
     def start(*args, **kwargs):
@@ -49,14 +53,15 @@ class UartProtocol:
     def write(self, buf):
         return bytes(__wrap(buf))
 
-    def write_frame(self, *args):
-        buf = bytearray(struct.pack(HDR_FMT, *args[0:-1]))
-        buf.extend(args[-1])
+    def write_frame(self, frame):
+        buf = bytearray(struct.pack(HDR_FMT, frame.cmd, frame.seq,
+                                    frame.steps))
+        buf.extend(frame.letters)
         buf.extend(struct.pack(CRC_FMT, crc16(buf)))
         return self.write(buf)
 
-    def uart_write(self, *args):
-        return self.uart.write(self.write_frame(*args))
+    def uart_write(self, frame):
+        return self.uart.write(self.write_frame(frame))
 
     @coroutine
     def read(self):
