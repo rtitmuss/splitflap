@@ -97,7 +97,24 @@ test_chars = list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") + list(
     reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
 #test_words = list(map(lambda s: s * len(display_order), test_chars))
 
-queue = 100 * test_words if is_picow else []
+queue = 100 * test_words
+
+
+def read_queued_frame():
+    sleep(2)
+
+    rpm = random.randint(5, 15)
+    letters = queue.pop(0)
+    print("display", letters, "rpm", rpm)
+
+    return UartFrame(UartProtocol.CMD_SET,
+                     0,
+                     rpm=rpm,
+                     letters=''.join(reorder(letters, ' ', display_indices)),
+                     offsets=display_offsets)
+
+
+next_frame = read_queued_frame if is_picow else None
 
 poll = select.poll()
 poll.register(uart_input.uart, select.POLLIN)
@@ -109,46 +126,38 @@ while True:
     try:
         gc.collect()
 
-        if queue:
-            sleep(2)
-            rpm = random.randint(5, 15)
-            max_steps_in = 0  # Todo add to queue
-            letters = ''.join(reorder(queue.pop(0), ' ', display_indices))
-            offsets = display_offsets
-            print("display", letters, "rpm", rpm)
+        if next_frame:
+            frame = next_frame()
 
         else:
             for sock, event in poll.ipoll():
                 if event and select.POLLIN:
                     if sock == uart_input.uart:
                         frame = uart_input.uart_read(UartProtocol.CMD_SET)
-                        if frame:
-                            seq_in = frame.seq
-                            rpm = frame.rpm
-                            max_steps_in = frame.steps
-                            letters = frame.letters
-                            offsets = frame.offsets
 
         gc.collect()
         print('mem_free:', gc.mem_free())
 
+        seq_in = frame.seq
         seq_out += 1
 
-        letters_overflow = letters[cluster.num_modules():]
-        offsets_overflow = offsets[cluster.num_modules():]
-        print('letters:', letters[:cluster.num_modules()], letters_overflow)
+        letters = frame.letters[:cluster.num_modules()]
+        offsets = frame.offsets[:cluster.num_modules()]
+        letters_overflow = frame.letters[cluster.num_modules():]
+        offsets_overflow = frame.offsets[cluster.num_modules():]
+        print('letters:', letters, letters_overflow)
 
-        cluster.set_rpm(rpm)
+        cluster.set_rpm(frame.rpm)
         cluster.set_offsets(offsets)
         cluster.set_letters(letters)
-        max_steps = max([cluster.get_max_steps(), max_steps_in])
+        max_steps = max([cluster.get_max_steps(), frame.steps])
 
         if letters_overflow:
             uart_output.uart_write(
                 UartFrame(UartProtocol.CMD_SET,
                           seq_out,
                           steps=max_steps,
-                          rpm=rpm,
+                          rpm=frame.rpm,
                           letters=letters_overflow,
                           offsets=offsets_overflow))
 
