@@ -36,9 +36,13 @@ class Cluster:
         self.step_interval_us = math.floor(
             (1 / (min(Cluster.MAX_RPM, rpm) / 60 * 2048)) * 1000000)
 
+    def set_offsets(self, offsets):
+        for module, offset in zip(self.module_list, offsets):
+            module.set_offset(offset)
+
     def set_letters(self, string):
         for module, letter in zip(self.module_list, string):
-            module.rotate_to_letter(letter)
+            module.set_letter(letter)
 
     def rotate_until_stopped(self, max_steps):
         self.module_led.value(True)

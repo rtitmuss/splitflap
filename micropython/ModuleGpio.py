@@ -19,8 +19,11 @@ class ModuleGpio:
             map(lambda x: Pin(x, Pin.OUT, value=0),
                 [motor_a, motor_b, motor_c, motor_d]))
 
-    def rotate_to_letter(self, letter):
-        self.state.rotate_to_letter(letter)
+    def set_offset(self, offset):
+        self.state.set_offset(offset)
+
+    def set_letter(self, letter):
+        self.state.set_letter(letter)
 
     def task(self):
         self.state.set_home_pin(self.sensor_pin.value())

@@ -58,7 +58,10 @@ class Module:
 
         return math.ceil((index + 0.5) * Module.STEPS_PER_LETTER)
 
-    def rotate_to_letter(self, letter):
+    def set_offset(self, offset):
+        self.offset = offset
+
+    def set_letter(self, letter):
         self.letter_position = (self.letter_to_position(letter) +
                                 self.offset) % Module.STEPS_PER_REVOLUTION
         self.force_rotation = True

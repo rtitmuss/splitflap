@@ -7,14 +7,20 @@ import uctypes
 SYNC = const(0x7e)
 ESC = const(0x7d)
 
-HDR_FMT = const('BBBI')
+HEADER_FMT = const('BBBI')
+LETTER_FMT = const('sB')
 CRC_FMT = const('H')
 
-Frame = namedtuple("Frame", ("cmd", "seq", "rpm", "steps", "letters"))
+HEADER_SIZE = struct.calcsize(HEADER_FMT)
+LETTER_SIZE = struct.calcsize(LETTER_FMT)
+CRC_SIZE = struct.calcsize(CRC_FMT)
+
+Frame = namedtuple("Frame",
+                   ("cmd", "seq", "rpm", "steps", "letters", "offsets"))
 
 
-def UartFrame(cmd, seq, rpm=0, steps=0, letters=''):
-    return Frame(cmd, seq, rpm, steps, letters)
+def UartFrame(cmd, seq, rpm=0, steps=0, letters='', offsets=[]):
+    return Frame(cmd, seq, rpm, steps, letters, offsets)
 
 
 def coroutine(func):
@@ -55,8 +61,13 @@ class UartProtocol:
 
     def write_frame(self, frame):
         buf = bytearray(
-            struct.pack(HDR_FMT, frame.cmd, frame.seq, frame.rpm, frame.steps))
-        buf.extend(frame.letters)
+            struct.pack(HEADER_FMT, frame.cmd, frame.seq, frame.rpm,
+                        frame.steps))
+
+        for i, letter in enumerate(frame.letters):
+            offset = frame.offsets[i] if i < len(frame.offsets) else 0
+            buf.extend(struct.pack(LETTER_FMT, letter, offset))
+
         buf.extend(struct.pack(CRC_FMT, crc16(buf)))
         return self.write(buf)
 
@@ -83,9 +94,6 @@ class UartProtocol:
 
     @coroutine
     def read_frame(self):
-        hdr_size = struct.calcsize(HDR_FMT)
-        crc_size = struct.calcsize(CRC_FMT)
-
         reader = self.read()
         byte = yield None
         while True:
@@ -95,9 +103,17 @@ class UartProtocol:
                     print('crc error')
                     byte = yield None
                 else:
-                    unpacked = struct.unpack(HDR_FMT, frame)
-                    letters = frame[hdr_size:-crc_size]
-                    byte = yield Frame(*unpacked, letters)
+                    n = (len(frame) - HEADER_SIZE - CRC_SIZE) // LETTER_SIZE
+                    header = struct.unpack(HEADER_FMT, frame)
+
+                    data = []
+                    for i in range(0, n):
+                        data += struct.unpack_from(
+                            LETTER_FMT, frame, HEADER_SIZE + LETTER_SIZE * i)
+
+                    byte = yield Frame(*header,
+                                       b''.join(data[::2]).decode('ascii'),
+                                       data[1::2])
             else:
                 byte = yield None
 
