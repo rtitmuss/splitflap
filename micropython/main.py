@@ -68,15 +68,13 @@ def reorder_letters(letters, indices):
     return ''.join(reordered_letters)
 
 
-led = machine.Pin("LED", machine.Pin.OUT)
+#led = machine.Pin("LED", machine.Pin.OUT)
 
+#def blink(timer):
+#    led.toggle()
 
-def blink(timer):
-    led.toggle()
-
-
-timer = Timer()
-timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
+#timer = Timer()
+#timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
 
 # todo: duplicate letters until I have printed more modules
 test_words = list([
@@ -107,6 +105,8 @@ while True:
             sleep(2)
             letters = reorder_letters(queue.pop(0), display_indices)
             max_steps_in = 0  # Todo add to queue
+            rpm = random.randint(5, 15)
+            print("display", letters, "rpm", rpm)
 
         else:
             for sock, event in poll.ipoll():
@@ -115,6 +115,7 @@ while True:
                         frame = uart_input.uart_read(UartProtocol.CMD_SET)
                         if frame:
                             seq_in = frame.seq
+                            rpm = frame.rpm
                             letters = frame.letters.decode('ascii')
                             max_steps_in = frame.steps
 
@@ -126,6 +127,7 @@ while True:
         letters_overflow = letters[cluster.num_modules():]
         print('letters:', letters[:cluster.num_modules()], letters_overflow)
 
+        cluster.set_rpm(rpm)
         cluster.set_letters(letters)
         max_steps = max([cluster.get_max_steps(), max_steps_in])
 
@@ -134,6 +136,7 @@ while True:
                 UartFrame(UartProtocol.CMD_SET,
                           seq_out,
                           steps=max_steps,
+                          rpm=rpm,
                           letters=letters_overflow))
 
             frame = uart_output.uart_read(UartProtocol.CMD_ACK, seq_out,

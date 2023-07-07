@@ -7,14 +7,14 @@ import uctypes
 SYNC = const(0x7e)
 ESC = const(0x7d)
 
-HDR_FMT = const('BBI')
+HDR_FMT = const('BBBI')
 CRC_FMT = const('H')
 
-Frame = namedtuple("Frame", ("cmd", "seq", "steps", "letters"))
+Frame = namedtuple("Frame", ("cmd", "seq", "rpm", "steps", "letters"))
 
 
-def UartFrame(cmd, seq, steps=0, letters=''):
-    return Frame(cmd, seq, steps, letters)
+def UartFrame(cmd, seq, rpm=0, steps=0, letters=''):
+    return Frame(cmd, seq, rpm, steps, letters)
 
 
 def coroutine(func):
@@ -54,8 +54,8 @@ class UartProtocol:
         return bytes(__wrap(buf))
 
     def write_frame(self, frame):
-        buf = bytearray(struct.pack(HDR_FMT, frame.cmd, frame.seq,
-                                    frame.steps))
+        buf = bytearray(
+            struct.pack(HDR_FMT, frame.cmd, frame.seq, frame.rpm, frame.steps))
         buf.extend(frame.letters)
         buf.extend(struct.pack(CRC_FMT, crc16(buf)))
         return self.write(buf)
