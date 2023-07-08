@@ -7,16 +7,16 @@ from time import localtime, sleep, ticks_diff, ticks_ms
 
 from Display import Display
 from InvertedNeoPixel import InvertedNeoPixel
-from ModuleGpio import ModuleGpio
+from LetterGpio import LetterGpio
 from UartProtocol import UartFrame, UartProtocol
 
 # START CONFIGURATION
 
-# module order when displaying alphabet
+# letter order when displaying alphabet
 #display_order = 'abcdefgh'
 display_order = 'febahgdc'
 
-# flap offsets in module order
+# flap offsets in letter order
 display_offsets = [0] * len(display_order)
 
 # END CONFIGURATION
@@ -28,10 +28,10 @@ except ImportError:
     is_picow = False
 
 display = Display(Pin(3, Pin.OUT, value=0), [
-    ModuleGpio(2, 28, 27, 26, 22),
-    ModuleGpio(14, 18, 19, 20, 21),
-    ModuleGpio(1, 9, 8, 7, 6),
-    ModuleGpio(15, 10, 11, 12, 13)
+    LetterGpio(2, 28, 27, 26, 22),
+    LetterGpio(14, 18, 19, 20, 21),
+    LetterGpio(1, 9, 8, 7, 6),
+    LetterGpio(15, 10, 11, 12, 13)
 ])
 
 neopixel = InvertedNeoPixel(Pin(0), 2)
@@ -148,10 +148,10 @@ while True:
         seq_in = frame.seq
         seq_out += 1
 
-        letters = frame.letters[:display.num_modules()]
-        offsets = frame.offsets[:display.num_modules()]
-        letters_overflow = frame.letters[display.num_modules():]
-        offsets_overflow = frame.offsets[display.num_modules():]
+        letters = frame.letters[:display.num_letters()]
+        offsets = frame.offsets[:display.num_letters()]
+        letters_overflow = frame.letters[display.num_letters():]
+        offsets_overflow = frame.offsets[display.num_letters():]
         print('letters:', letters, letters_overflow)
 
         display.set_rpm(frame.rpm)

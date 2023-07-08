@@ -1,7 +1,7 @@
 import math
 
 
-class Module:
+class Letter:
 
     STEPS_PER_REVOLUTION = 2038  # 28BYJ-48
 
@@ -23,9 +23,8 @@ class Module:
         MOT_PHASE_C | MOT_PHASE_D, MOT_PHASE_D | MOT_PHASE_A
     ]
 
-    def __init__(self, offset=0, hall_sensor_active=0):
+    def __init__(self, offset=0):
         self.offset = offset
-        self.hall_sensor_active = hall_sensor_active
 
         # True if error is detected
         self.panic_error = False
@@ -42,8 +41,8 @@ class Module:
         self.count_non_home_steps = 0
 
         # motor and target letter positions
-        self.motor_position = -Module.STEPS_PER_REVOLUTION
-        self.letter_position = -Module.STEPS_PER_REVOLUTION
+        self.motor_position = -Letter.STEPS_PER_REVOLUTION
+        self.letter_position = -Letter.STEPS_PER_REVOLUTION
 
         # stats
         self.max_count_home_steps = 0
@@ -52,18 +51,18 @@ class Module:
         self.total_steps = 0
 
     def letter_to_position(self, letter):
-        index = Module.LETTERS.find(letter.upper())
+        index = Letter.LETTERS.find(letter.upper())
         if index == -1:
             raise ValueError('invalid letter')
 
-        return math.ceil((index + 0.5) * Module.STEPS_PER_LETTER)
+        return math.ceil((index + 0.5) * Letter.STEPS_PER_LETTER)
 
     def set_offset(self, offset):
         self.offset = offset
 
     def set_letter(self, letter, rotate_always=False):
         self.letter_position = (self.letter_to_position(letter) +
-                                self.offset) % Module.STEPS_PER_REVOLUTION
+                                self.offset) % Letter.STEPS_PER_REVOLUTION
         self.rotate_always = rotate_always
         self.total_letters += 1
 
@@ -81,11 +80,11 @@ class Module:
             return 0
 
         if self.motor_position == self.letter_position and self.rotate_always:
-            return Module.STEPS_PER_REVOLUTION
+            return Letter.STEPS_PER_REVOLUTION
         if self.motor_position <= self.letter_position:
             return self.letter_position - self.motor_position
         else:
-            return Module.STEPS_PER_REVOLUTION - self.motor_position + self.letter_position
+            return Letter.STEPS_PER_REVOLUTION - self.motor_position + self.letter_position
 
     def is_panic(self):
         return self.panic_error
@@ -108,12 +107,12 @@ class Module:
             raise ValueError('home_pin not set')
 
         if self.motor_pins:
-            if self.home_pin == self.hall_sensor_active:
+            if self.home_pin:
                 self.count_home_steps += 1
                 self.max_count_home_steps = max(self.max_count_home_steps,
                                                 self.count_home_steps)
 
-                if self.count_home_steps > Module.MAX_HOME_STEPS:
+                if self.count_home_steps > Letter.MAX_HOME_STEPS:
                     self.panic('dwell home')
             elif self.count_home_steps > 0:
                 # falling edge, found home position
@@ -125,15 +124,15 @@ class Module:
                 self.max_count_non_home_steps = max(
                     self.max_count_non_home_steps, self.count_non_home_steps)
 
-                if self.count_non_home_steps > Module.MAX_NON_HOME_STEPS:
+                if self.count_non_home_steps > Letter.MAX_NON_HOME_STEPS:
                     self.panic('missed home')
 
         if self.panic_error:
             return
 
         if self.motor_position != self.letter_position or self.rotate_always:
-            self.motor_pins = Module.STEP_PATTERN[self.motor_position %
-                                                  len(Module.STEP_PATTERN)]
+            self.motor_pins = Letter.STEP_PATTERN[self.motor_position %
+                                                  len(Letter.STEP_PATTERN)]
             self.rotate_always = False
             self.motor_position += 1
             self.total_steps += 1

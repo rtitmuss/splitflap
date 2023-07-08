@@ -10,31 +10,31 @@ class Display:
     END_IN_SYNC = 1
     ROTATE_ALWAYS_END_IN_SYNC = 2
 
-    def __init__(self, display_led, modules_gpio_list):
+    def __init__(self, display_led, letters_list):
         self.display_led = display_led
-        self.module_list = modules_gpio_list
+        self.letter_list = letters_list
         self.set_rpm(Display.MAX_RPM)
 
     def __task(self, max_steps):
-        for module in self.module_list:
-            if self.mode == Display.BEGIN_IN_SYNC or max_steps <= module.steps_to_rotate(
+        for letter in self.letter_list:
+            if self.mode == Display.BEGIN_IN_SYNC or max_steps <= letter.steps_to_rotate(
             ):
-                module.task()
+                letter.task()
 
-        for module in self.module_list:
-            module.step()
+        for letter in self.letter_list:
+            letter.step()
 
-    def num_modules(self):
-        return len(self.module_list)
+    def num_letters(self):
+        return len(self.letter_list)
 
     def is_all_stopped(self):
-        return all(map(lambda x: x.is_stopped(), self.module_list))
+        return all(map(lambda x: x.is_stopped(), self.letter_list))
 
     def get_max_steps(self):
-        return max(map(lambda x: x.steps_to_rotate(), self.module_list))
+        return max(map(lambda x: x.steps_to_rotate(), self.letter_list))
 
     def get_status(self):
-        return ''.join(map(lambda x: x.get_status(), self.module_list))
+        return ''.join(map(lambda x: x.get_status(), self.letter_list))
 
     def set_rpm(self, rpm):
         # 1 / (15 max_rpm / 60 sec * 2048 steps)= ~1953ms
@@ -42,8 +42,8 @@ class Display:
             (1 / (min(Display.MAX_RPM, rpm) / 60 * 2048)) * 1000000)
 
     def set_offsets(self, offsets):
-        for module, offset in zip(self.module_list, offsets):
-            module.set_offset(offset)
+        for letter, offset in zip(self.letter_list, offsets):
+            letter.set_offset(offset)
 
     def set_letters(self, string, mode=BEGIN_IN_SYNC):
         self.mode = mode

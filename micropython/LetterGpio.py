@@ -1,8 +1,8 @@
 from machine import Pin
-from Module import Module
+from Letter import Letter
 
 
-class ModuleGpio:
+class LetterGpio:
 
     def __init__(self,
                  hall_sensor,
@@ -10,10 +10,10 @@ class ModuleGpio:
                  motor_b,
                  motor_c,
                  motor_d,
-                 offset=None,
-                 hall_sensor_active=None):
-        self.state = Module(offset=offset,
-                            hall_sensor_active=hall_sensor_active)
+                 offset=0,
+                 hall_sensor_active=0):
+        self.hall_sensor_active = hall_sensor_active
+        self.state = Letter(offset=offset)
         self.sensor_pin = Pin(hall_sensor, Pin.IN, Pin.PULL_UP)
         self.motor_pin = list(
             map(lambda x: Pin(x, Pin.OUT, value=0),
@@ -26,7 +26,8 @@ class ModuleGpio:
         self.state.set_letter(letter, rotate_always)
 
     def task(self):
-        self.state.set_home_pin(self.sensor_pin.value())
+        self.state.set_home_pin(
+            self.sensor_pin.value() == self.hall_sensor_active)
         self.state.task()
 
     def step(self):
