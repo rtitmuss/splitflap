@@ -5,7 +5,7 @@ import select
 import sys
 from time import localtime, sleep, ticks_diff, ticks_ms
 
-from Cluster import Cluster
+from Display import Display
 from InvertedNeoPixel import InvertedNeoPixel
 from ModuleGpio import ModuleGpio
 from UartProtocol import UartFrame, UartProtocol
@@ -27,7 +27,7 @@ try:
 except ImportError:
     is_picow = False
 
-cluster = Cluster(Pin(3, Pin.OUT, value=0), [
+display = Display(Pin(3, Pin.OUT, value=0), [
     ModuleGpio(2, 28, 27, 26, 22),
     ModuleGpio(14, 18, 19, 20, 21),
     ModuleGpio(1, 9, 8, 7, 6),
@@ -115,7 +115,7 @@ def read_time_frame():
     return UartFrame(UartProtocol.CMD_SET,
                      0,
                      rpm=12,
-                     display_mode=Cluster.BEGIN_IN_SYNC,
+                     display_mode=Display.BEGIN_IN_SYNC,
                      letters=''.join(reorder(letters, ' ', display_indices)),
                      offsets=display_offsets)
 
@@ -148,16 +148,16 @@ while True:
         seq_in = frame.seq
         seq_out += 1
 
-        letters = frame.letters[:cluster.num_modules()]
-        offsets = frame.offsets[:cluster.num_modules()]
-        letters_overflow = frame.letters[cluster.num_modules():]
-        offsets_overflow = frame.offsets[cluster.num_modules():]
+        letters = frame.letters[:display.num_modules()]
+        offsets = frame.offsets[:display.num_modules()]
+        letters_overflow = frame.letters[display.num_modules():]
+        offsets_overflow = frame.offsets[display.num_modules():]
         print('letters:', letters, letters_overflow)
 
-        cluster.set_rpm(frame.rpm)
-        cluster.set_offsets(offsets)
-        cluster.set_letters(letters, frame.display_mode)
-        max_steps = max([cluster.get_max_steps(), frame.steps])
+        display.set_rpm(frame.rpm)
+        display.set_offsets(offsets)
+        display.set_letters(letters, frame.display_mode)
+        max_steps = max([display.get_max_steps(), frame.steps])
 
         if letters_overflow:
             uart_output.uart_write(
@@ -181,9 +181,9 @@ while True:
                        random.randint(0, 255)))
         neopixel.write()
 
-        cluster.rotate_until_stopped(max_steps)
+        display.rotate_until_stopped(max_steps)
 
-        status = cluster.get_status()
+        status = display.get_status()
 
         if letters_overflow:
             frame = uart_output.uart_read(UartProtocol.CMD_END, seq_out,

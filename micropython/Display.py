@@ -2,7 +2,7 @@ import math
 import time
 
 
-class Cluster:
+class Display:
 
     MAX_RPM = 15  # (max rpm 15)
 
@@ -10,14 +10,14 @@ class Cluster:
     END_IN_SYNC = 1
     ROTATE_ALWAYS_END_IN_SYNC = 2
 
-    def __init__(self, module_led, modules_gpio_list):
-        self.module_led = module_led
+    def __init__(self, display_led, modules_gpio_list):
+        self.display_led = display_led
         self.module_list = modules_gpio_list
-        self.set_rpm(Cluster.MAX_RPM)
+        self.set_rpm(Display.MAX_RPM)
 
     def __task(self, max_steps):
         for module in self.module_list:
-            if self.mode == BEGIN_IN_SYNC or max_steps <= module.steps_to_rotate(
+            if self.mode == Display.BEGIN_IN_SYNC or max_steps <= module.steps_to_rotate(
             ):
                 module.task()
 
@@ -39,7 +39,7 @@ class Cluster:
     def set_rpm(self, rpm):
         # 1 / (15 max_rpm / 60 sec * 2048 steps)= ~1953ms
         self.step_interval_us = math.floor(
-            (1 / (min(Cluster.MAX_RPM, rpm) / 60 * 2048)) * 1000000)
+            (1 / (min(Display.MAX_RPM, rpm) / 60 * 2048)) * 1000000)
 
     def set_offsets(self, offsets):
         for module, offset in zip(self.module_list, offsets):
@@ -47,12 +47,13 @@ class Cluster:
 
     def set_letters(self, string, mode=BEGIN_IN_SYNC):
         self.mode = mode
-        for module, letter in zip(self.module_list, string):
-            module.set_letter(
-                letter, rotate_always=(mode == ROTATE_ALWAYS_END_IN_SYNC))
+        for letter, char in zip(self.letter_list, string):
+            letter.set_letter(
+                char,
+                rotate_always=(mode == Display.ROTATE_ALWAYS_END_IN_SYNC))
 
     def rotate_until_stopped(self, max_steps):
-        self.module_led.value(True)
+        self.display_led.value(True)
 
         while True:
             next_us = time.ticks_us() + self.step_interval_us
@@ -67,4 +68,4 @@ class Cluster:
             if time.ticks_diff(next_us, now_us) > 0:
                 time.sleep_us(time.ticks_diff(next_us, now_us))
 
-        self.module_led.value(False)
+        self.display_led.value(False)
