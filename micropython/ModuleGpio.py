@@ -10,8 +10,8 @@ class ModuleGpio:
                  motor_b,
                  motor_c,
                  motor_d,
-                 offset=0,
-                 hall_sensor_active=0):
+                 offset=None,
+                 hall_sensor_active=None):
         self.state = Module(offset=offset,
                             hall_sensor_active=hall_sensor_active)
         self.sensor_pin = Pin(hall_sensor, Pin.IN, Pin.PULL_UP)
@@ -22,8 +22,8 @@ class ModuleGpio:
     def set_offset(self, offset):
         self.state.set_offset(offset)
 
-    def set_letter(self, letter):
-        self.state.set_letter(letter)
+    def set_letter(self, letter, rotate_always=None):
+        self.state.set_letter(letter, rotate_always)
 
     def task(self):
         self.state.set_home_pin(self.sensor_pin.value())

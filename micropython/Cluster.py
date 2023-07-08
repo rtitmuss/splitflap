@@ -6,6 +6,10 @@ class Cluster:
 
     MAX_RPM = 15  # (max rpm 15)
 
+    BEGIN_IN_SYNC = 0
+    END_IN_SYNC = 1
+    ROTATE_ALWAYS_END_IN_SYNC = 2
+
     def __init__(self, module_led, modules_gpio_list):
         self.module_led = module_led
         self.module_list = modules_gpio_list
@@ -13,7 +17,8 @@ class Cluster:
 
     def __task(self, max_steps):
         for module in self.module_list:
-            if max_steps <= module.steps_to_rotate():
+            if self.mode == BEGIN_IN_SYNC or max_steps <= module.steps_to_rotate(
+            ):
                 module.task()
 
         for module in self.module_list:
@@ -40,9 +45,11 @@ class Cluster:
         for module, offset in zip(self.module_list, offsets):
             module.set_offset(offset)
 
-    def set_letters(self, string):
+    def set_letters(self, string, mode=BEGIN_IN_SYNC):
+        self.mode = mode
         for module, letter in zip(self.module_list, string):
-            module.set_letter(letter)
+            module.set_letter(
+                letter, rotate_always=(mode == ROTATE_ALWAYS_END_IN_SYNC))
 
     def rotate_until_stopped(self, max_steps):
         self.module_led.value(True)

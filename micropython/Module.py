@@ -23,7 +23,7 @@ class Module:
         MOT_PHASE_C | MOT_PHASE_D, MOT_PHASE_D | MOT_PHASE_A
     ]
 
-    def __init__(self, offset=0, hall_sensor_active=1):
+    def __init__(self, offset=0, hall_sensor_active=0):
         self.offset = offset
         self.hall_sensor_active = hall_sensor_active
 
@@ -32,7 +32,7 @@ class Module:
 
         # stepper motor pins
         self.motor_pins = 0
-        self.force_rotation = False
+        self.rotate_always = False
 
         # home pin (hall effect sensor)
         self.home_pin = None
@@ -61,10 +61,10 @@ class Module:
     def set_offset(self, offset):
         self.offset = offset
 
-    def set_letter(self, letter):
+    def set_letter(self, letter, rotate_always=False):
         self.letter_position = (self.letter_to_position(letter) +
                                 self.offset) % Module.STEPS_PER_REVOLUTION
-        self.force_rotation = True
+        self.rotate_always = rotate_always
         self.total_letters += 1
 
     def set_home_pin(self, home_pin):
@@ -80,7 +80,7 @@ class Module:
         if self.panic_error:
             return 0
 
-        if self.motor_position == self.letter_position and self.force_rotation:
+        if self.motor_position == self.letter_position and self.rotate_always:
             return Module.STEPS_PER_REVOLUTION
         if self.motor_position <= self.letter_position:
             return self.letter_position - self.motor_position
@@ -131,10 +131,10 @@ class Module:
         if self.panic_error:
             return
 
-        if self.motor_position != self.letter_position or self.force_rotation:
+        if self.motor_position != self.letter_position or self.rotate_always:
             self.motor_pins = Module.STEP_PATTERN[self.motor_position %
                                                   len(Module.STEP_PATTERN)]
-            self.force_rotation = False
+            self.rotate_always = False
             self.motor_position += 1
             self.total_steps += 1
         else:

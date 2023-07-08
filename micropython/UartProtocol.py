@@ -7,7 +7,7 @@ import uctypes
 SYNC = const(0x7e)
 ESC = const(0x7d)
 
-HEADER_FMT = const('BBBI')
+HEADER_FMT = const('BBBBI')
 LETTER_FMT = const('sB')
 CRC_FMT = const('H')
 
@@ -15,12 +15,19 @@ HEADER_SIZE = struct.calcsize(HEADER_FMT)
 LETTER_SIZE = struct.calcsize(LETTER_FMT)
 CRC_SIZE = struct.calcsize(CRC_FMT)
 
-Frame = namedtuple("Frame",
-                   ("cmd", "seq", "rpm", "steps", "letters", "offsets"))
+Frame = namedtuple(
+    "Frame",
+    ("cmd", "seq", "rpm", "display_mode", "steps", "letters", "offsets"))
 
 
-def UartFrame(cmd, seq, rpm=0, steps=0, letters='', offsets=[]):
-    return Frame(cmd, seq, rpm, steps, letters, offsets)
+def UartFrame(cmd,
+              seq,
+              rpm=0,
+              display_mode=0,
+              steps=0,
+              letters='',
+              offsets=[]):
+    return Frame(cmd, seq, rpm, display_mode, steps, letters, offsets)
 
 
 def coroutine(func):
@@ -62,7 +69,7 @@ class UartProtocol:
     def write_frame(self, frame):
         buf = bytearray(
             struct.pack(HEADER_FMT, frame.cmd, frame.seq, frame.rpm,
-                        frame.steps))
+                        frame.display_mode, frame.steps))
 
         for i, letter in enumerate(frame.letters):
             offset = frame.offsets[i] if i < len(frame.offsets) else 0

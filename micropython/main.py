@@ -73,7 +73,6 @@ display_offsets = reorder(display_offsets, 0, display_indices)
 #timer = Timer()
 #timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
 
-# todo: duplicate letters until I have printed more modules
 test_words = list([
     "abcdefgh", "Hi", "$#& ", "Hello", "World", "Spirit", "Purple", "Marvel",
     "Garden", "Elephant", "Football", "Birthday", "Rainbow", "Keyboard",
@@ -93,12 +92,14 @@ def read_queued_frame():
     sleep(2)
 
     rpm = random.randint(5, 15)
+    display_mode = random.randint(0, 2)
     letters = queue.pop(0)
-    print("display", letters, "rpm", rpm)
+    print("display", letters, "rpm", rpm, "display_mode", display_mode)
 
     return UartFrame(UartProtocol.CMD_SET,
                      0,
                      rpm=rpm,
+                     display_mode=display_mode,
                      letters=''.join(reorder(letters, ' ', display_indices)),
                      offsets=display_offsets)
 
@@ -110,11 +111,11 @@ def read_time_frame():
 
     (year, month, mday, hour, minute, second, weekday, yearday) = localtime()
     letters = "{:02d}: {:02d}".format(hour, minute)
-    print(letters)
 
     return UartFrame(UartProtocol.CMD_SET,
                      0,
                      rpm=12,
+                     display_mode=Cluster.BEGIN_IN_SYNC,
                      letters=''.join(reorder(letters, ' ', display_indices)),
                      offsets=display_offsets)
 
@@ -155,7 +156,7 @@ while True:
 
         cluster.set_rpm(frame.rpm)
         cluster.set_offsets(offsets)
-        cluster.set_letters(letters)
+        cluster.set_letters(letters, frame.display_mode)
         max_steps = max([cluster.get_max_steps(), frame.steps])
 
         if letters_overflow:
@@ -164,6 +165,7 @@ while True:
                           seq_out,
                           steps=max_steps,
                           rpm=frame.rpm,
+                          display_mode=frame.display_mode,
                           letters=letters_overflow,
                           offsets=offsets_overflow))
 
