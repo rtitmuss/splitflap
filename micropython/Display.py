@@ -39,7 +39,7 @@ class Display:
     def set_rpm(self, rpm):
         # 1 / (15 max_rpm / 60 sec * 2048 steps)= ~1953ms
         self.step_interval_us = math.floor(
-            (1 / (min(Display.MAX_RPM, rpm) / 60 * 2048)) * 1000000)
+            (1 / (min(Display.MAX_RPM, rpm) / 60 * 2038)) * 1000000)
 
     def set_offsets(self, offsets):
         for letter, offset in zip(self.letter_list, offsets):
@@ -56,7 +56,7 @@ class Display:
         self.display_led.value(True)
 
         while True:
-            next_us = time.ticks_us() + self.step_interval_us
+            next_us = time.ticks_add(time.ticks_us(), self.step_interval_us)
 
             self.__task(max_steps)
             max_steps -= 1
