@@ -13,8 +13,8 @@ from UartProtocol import UartFrame, UartProtocol
 # START CONFIGURATION
 
 # letter order when displaying alphabet
-#display_order = 'abcdefgh'
-display_order = 'febahgdc'
+#display_order = 'abcdefghijkl'
+display_order = 'jifebalkhgdc'
 
 # flap offsets in letter order
 display_offsets = [0] * len(display_order)
@@ -65,25 +65,27 @@ def reorder(data, default, indices):
 display_indices = list(map(lambda x: ord(x) - ord('a'), display_order))
 display_offsets = reorder(display_offsets, 0, display_indices)
 
-#led = machine.Pin("LED", machine.Pin.OUT)
+led = machine.Pin("LED", machine.Pin.OUT)
 
-#def blink(timer):
-#    led.toggle()
 
-#timer = Timer()
-#timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
+def blink(timer):
+    led.toggle()
+
+
+timer = Timer()
+timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
 
 test_words = list([
-    "abcdefgh", "Hi", "$#& ", "Hello", "World", "Spirit", "Purple", "Marvel",
-    "Garden", "Elephant", "Football", "Birthday", "Rainbow", "Keyboard",
-    "Necklace", "Positive", "Mountain", "Campaign", "Hospital", "Orbit",
-    "Pepper", "874512", "365498", "720156", "935827", "$$$$$$", "$#$#$#",
-    "&&&&&&"
+    "abcdefghijkl", "$#&#$&$#$&$#", "Hello  World", "Spirit", "Purple",
+    "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
+    "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital",
+    "Orbit", "Pepper", "874512", "365498", "720156", "935827", "$$$$$$",
+    "$#$#$#", "&&&&&&"
 ])
 
-test_chars = list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") + list(
-    reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
-#test_words = list(map(lambda s: s * len(display_order), test_chars))
+#list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") +
+test_chars = list(reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
+test_words = list(map(lambda s: s * len(display_order), test_chars))
 
 queue = 100 * test_words
 
@@ -105,16 +107,15 @@ def read_queued_frame():
 
 
 def read_time_frame():
-    (year, month, mday, hour, minute, second, weekday, yearday) = localtime()
-    print("second", second)
-    sleep(60 - second)
+    sleep(1)
 
     (year, month, mday, hour, minute, second, weekday, yearday) = localtime()
-    letters = "{:02d}: {:02d}".format(hour, minute)
+    letters = " {:02d}:{:02d} {:02d}".format(hour, minute, second)
+    #    letters = "   {:02d}   {:02d}".format(hour, minute)
 
     return UartFrame(UartProtocol.CMD_SET,
                      0,
-                     rpm=12,
+                     rpm=15,
                      display_mode=Display.BEGIN_IN_SYNC,
                      letters=''.join(reorder(letters, ' ', display_indices)),
                      offsets=display_offsets)
