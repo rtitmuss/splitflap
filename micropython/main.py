@@ -1,199 +1,122 @@
 import gc
+import math
+import time
+
+from array import array
 from machine import Pin, Timer, UART
-import random
-import select
-import sys
-from time import localtime, sleep, ticks_diff, ticks_ms
+from micropython import const
 
-from Display import Display
+from ElementGpio import ElementGpio
+from Message import Message
 from InvertedNeoPixel import InvertedNeoPixel
-from LetterGpio import LetterGpio
-from UartProtocol import UartFrame, UartProtocol
+from Panel import Panel
+from UartProtocol import UartProtocol
+from typing import Union
 
-# START CONFIGURATION
-
-# letter order when displaying alphabet
-#display_order = 'abcdefghijkl'
-display_order = 'jifebalkhgdc'
-
-# flap offsets in letter order
-display_offsets = [0] * len(display_order)
-
-# END CONFIGURATION
-
-is_picow = True
+# primary or downstream panel
+is_picow: bool = True
 try:
     import network
 except ImportError:
     is_picow = False
 
-display = Display(Pin(3, Pin.OUT, value=0), [
-    LetterGpio(2, 28, 27, 26, 22),
-    LetterGpio(14, 18, 19, 20, 21),
-    LetterGpio(1, 9, 8, 7, 6),
-    LetterGpio(15, 10, 11, 12, 13)
-])
+# leds
+rp2040_led = Pin("LED", Pin.OUT)
+timer = Timer(period=2000, mode=Timer.PERIODIC, callback=lambda t: rp2040_led.toggle())
 
+panel_led = Pin(3, Pin.OUT, value=0)
 neopixel = InvertedNeoPixel(Pin(0), 2)
 
-UART_BAUDRATE = const(19200)
+# uart
+UART_BAUD_RATE = const(19200)
 UART_CHAR_TIMEOUT_MS = const(10)
 UART_FRAME_TIMEOUT_MS = const(200)
 
-uart_input = UartProtocol(
+uart_upstream = UartProtocol(
     UART(0,
-         baudrate=UART_BAUDRATE,
+         baudrate=UART_BAUD_RATE,
          tx=Pin(16, Pin.IN, Pin.PULL_UP),
          rx=Pin(17, Pin.OUT, Pin.PULL_UP),
          timeout=UART_CHAR_TIMEOUT_MS))
-uart_output = UartProtocol(
+
+uart_downstream = UartProtocol(
     UART(1,
-         baudrate=UART_BAUDRATE,
+         baudrate=UART_BAUD_RATE,
          tx=Pin(4, Pin.IN, Pin.PULL_UP),
          rx=Pin(5, Pin.OUT, Pin.PULL_UP),
          timeout=UART_CHAR_TIMEOUT_MS))
 
-
-def reorder(data, default, indices):
-    reordered_data = [default] * len(indices)
-    for i, index in enumerate(indices):
-        if i < len(data):
-            reordered_data[index] = data[i]
-    return reordered_data
-
-
-display_indices = list(map(lambda x: ord(x) - ord('a'), display_order))
-display_offsets = reorder(display_offsets, 0, display_indices)
-
-led = machine.Pin("LED", machine.Pin.OUT)
-
-
-def blink(timer):
-    led.toggle()
-
-
-timer = Timer()
-timer.init(freq=2.5, mode=Timer.PERIODIC, callback=blink)
-
-test_words = list([
-    "abcdefghijkl", "$#&#$&$#$&$#", "Hello  World", "Spirit", "Purple",
-    "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
-    "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital",
-    "Orbit", "Pepper", "874512", "365498", "720156", "935827", "$$$$$$",
-    "$#$#$#", "&&&&&&"
+# panel and element
+panel = Panel([
+    ElementGpio(2, 28, 27, 26, 22),
+    ElementGpio(14, 18, 19, 20, 21),
+    ElementGpio(1, 9, 8, 7, 6),
+    ElementGpio(15, 10, 11, 12, 13)
 ])
 
-#list(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#") +
-test_chars = list(reversed("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&# "))
-test_words = list(map(lambda s: s * len(display_order), test_chars))
+# todo move this ...
 
-queue = 100 * test_words
+test_i = 0
+test_words = list([
+        "abcdefghijkl", "Hello  World", "Spirit", "Purple",
+        "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
+        "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital",
+        "Orbit", "Pepper", "874512", "365498", "720156", "935827", "$$$$$$",
+        "$#$#$#", "&&&&&&"
+    ])
 
+# return frame from queue or UART depending if this is a primary or secondary module
+def load_message(is_stopped: bool, status: str) -> Union[Message, None]:
+    if not is_stopped:
+        return
 
-def read_queued_frame():
-    sleep(2)
+    time.sleep(2)
 
-    rpm = random.randint(5, 15)
-    display_mode = random.randint(0, 2)
-    letters = queue.pop(0)
-    print("display", letters, "rpm", rpm, "display_mode", display_mode)
+    global test_i
+    word = test_words[test_i % len(test_words)]
+    test_i += 1
 
-    return UartFrame(UartProtocol.CMD_SET,
-                     0,
-                     rpm=rpm,
-                     display_mode=display_mode,
-                     letters=''.join(reorder(letters, ' ', display_indices)),
-                     offsets=display_offsets)
-
-
-def read_time_frame():
-    sleep(1)
-
-    (year, month, mday, hour, minute, second, weekday, yearday) = localtime()
-    letters = " {:02d}:{:02d} {:02d}".format(hour, minute, second)
-    #    letters = "   {:02d}   {:02d}".format(hour, minute)
-
-    return UartFrame(UartProtocol.CMD_SET,
-                     0,
-                     rpm=15,
-                     display_mode=Display.BEGIN_IN_SYNC,
-                     letters=''.join(reorder(letters, ' ', display_indices)),
-                     offsets=display_offsets)
+    return Message.word_starting_in_sync(15, word)
 
 
-next_frame = read_time_frame if is_picow else None
-#next_frame = read_queued_frame if is_picow else None
+def main_loop():
+    # loop metrics
+    loop_buffer_size = 1000
+    loop_buffer = array('i', [0] * loop_buffer_size)
+    loop_buffer_index = 0
 
-poll = select.poll()
-poll.register(uart_input.uart, select.POLLIN)
+    gc.collect()
 
-seq_in = 0
-seq_out = 0
+    while True:
+        t0_us = time.ticks_us()
 
-while True:
-    try:
-        gc.collect()
+        is_stopped = panel.is_stopped()
+        panel_led.value(not is_stopped)
 
-        if next_frame:
-            frame = next_frame()
+        message = load_message(is_stopped, panel.get_motor_position())
+        if message:
+            panel.set_message(message)
 
-        else:
-            for sock, event in poll.ipoll():
-                if event and select.POLLIN:
-                    if sock == uart_input.uart:
-                        frame = uart_input.uart_read(UartProtocol.CMD_SET)
+            # loop metrics
+            loop_average_time = sum(loop_buffer) / loop_buffer_size
+            loop_variance = sum((x - loop_average_time) ** 2 for x in loop_buffer) / (loop_buffer_size - 1)
+            loop_std_deviation = math.sqrt(loop_variance)
+            print("loop: {:.2f}us +/-{:.2f}us".format(loop_average_time, loop_std_deviation))
 
-        gc.collect()
-        print('mem_free:', gc.mem_free())
+            gc.collect()
+            print('mem_free:', gc.mem_free())
 
-        seq_in = frame.seq
-        seq_out += 1
+        interval_us = panel.step()
 
-        letters = frame.letters[:display.num_letters()]
-        offsets = frame.offsets[:display.num_letters()]
-        letters_overflow = frame.letters[display.num_letters():]
-        offsets_overflow = frame.offsets[display.num_letters():]
-        print('letters:', letters, letters_overflow)
+        t1_us = time.ticks_us()
+        elapsed_us = time.ticks_diff(t1_us, t0_us)
+        delay_us = interval_us - elapsed_us
 
-        display.set_rpm(frame.rpm)
-        display.set_offsets(offsets)
-        display.set_letters(letters, frame.display_mode)
-        max_steps = max([display.get_max_steps(), frame.steps])
+        if delay_us > 0:
+            time.sleep_us(delay_us)
 
-        if letters_overflow:
-            uart_output.uart_write(
-                UartFrame(UartProtocol.CMD_SET,
-                          seq_out,
-                          steps=max_steps,
-                          rpm=frame.rpm,
-                          display_mode=frame.display_mode,
-                          letters=letters_overflow,
-                          offsets=offsets_overflow))
+        loop_buffer[loop_buffer_index] = elapsed_us
+        loop_buffer_index = (loop_buffer_index + 1) % loop_buffer_size
 
-            frame = uart_output.uart_read(UartProtocol.CMD_ACK, seq_out,
-                                          UART_FRAME_TIMEOUT_MS)
-            if frame:
-                max_steps = frame.steps
 
-        uart_input.uart_write(
-            UartFrame(UartProtocol.CMD_ACK, seq_in, steps=max_steps))
-
-        neopixel.fill((random.randint(0, 255), random.randint(0, 255),
-                       random.randint(0, 255)))
-        neopixel.write()
-
-        display.rotate_until_stopped(max_steps)
-
-        status = display.get_status()
-
-        if letters_overflow:
-            frame = uart_output.uart_read(UartProtocol.CMD_END, seq_out,
-                                          UART_FRAME_TIMEOUT_MS)
-            status = '{},{}'.format(status, frame.letters if frame else '?')
-
-        print('status:', status)
-        uart_input.uart_write(
-            UartFrame(UartProtocol.CMD_END, seq_in, letters=status))
-
-    except Exception as e:
-        sys.print_exception(e)
+main_loop()
