@@ -3,6 +3,8 @@ import math
 import time
 
 from array import array
+
+import micropython
 from machine import Pin, Timer, UART
 from micropython import const
 
@@ -79,11 +81,14 @@ def load_message(is_stopped: bool, status: str) -> Union[Message, None]:
     return Message.word_starting_in_sync(15, word)
 
 
+@micropython.native
 def main_loop():
     # loop metrics
     loop_buffer_size = 1000
     loop_buffer = array('i', [0] * loop_buffer_size)
     loop_buffer_index = 0
+
+    interval_us = 0
 
     gc.collect()
 
@@ -101,7 +106,7 @@ def main_loop():
             loop_average_time = sum(loop_buffer) / loop_buffer_size
             loop_variance = sum((x - loop_average_time) ** 2 for x in loop_buffer) / (loop_buffer_size - 1)
             loop_std_deviation = math.sqrt(loop_variance)
-            print("loop: {:.2f}us +/-{:.2f}us".format(loop_average_time, loop_std_deviation))
+            print("loop: {:.2f}us +/-{:.2f}; interval {}us".format(loop_average_time, loop_std_deviation, interval_us))
 
             gc.collect()
             print('mem_free:', gc.mem_free())

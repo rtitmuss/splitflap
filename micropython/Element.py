@@ -1,4 +1,6 @@
 from array import array
+
+import micropython
 from micropython import const
 
 from typing import Union
@@ -63,13 +65,16 @@ class Element:
         self.element_position = element_position % _STEPS_PER_REVOLUTION
         self.element_rotation = element_position // _STEPS_PER_REVOLUTION
 
+    @micropython.native
     def get_motor_position(self):
         return [self.motor_position if self.panic is None else -1]
 
+    @micropython.native
     def is_stopped(self):
         return (self.element_delay == 0
                 and self.motor_position == self.element_position)
 
+    @micropython.native
     def step(self):
         if self.home_pin is None:
             raise ValueError('home_pin not set')

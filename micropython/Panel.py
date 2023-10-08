@@ -1,6 +1,8 @@
 import math
 
 from array import array
+
+import micropython
 from micropython import const
 
 from reduce import reduce
@@ -28,17 +30,22 @@ class Panel:
         self.step_interval_us = math.floor(
             (1 / (min(Panel.MAX_28BYJ_48_RPM, rpm) / 60 * 2038)) * 1000000)
 
+    @micropython.native
     def get_motor_position(self) -> [int]:
-        return reduce(lambda x, y: x + y, map(lambda element: element.get_motor_position(), self.element_list))
-        # return [item for element in self.element_list for item in element.get_motor_position()]
+        # return reduce(lambda x, y: x + y, map(lambda element: element.get_motor_position(), self.element_list))
+        # optimized:
+        return [item for element in self.element_list for item in element.get_motor_position()]
 
+    @micropython.native
     def is_stopped(self) -> bool:
-        return all(map(lambda element: element.is_stopped(), self.element_list))
-        # is_stopped = True
-        # for element in self.element_list:
-        #     is_stopped = is_stopped and element.is_stopped()
-        # return is_stopped
+        # return all(map(lambda element: element.is_stopped(), self.element_list))
+        # optimized:
+        is_stopped = True
+        for element in self.element_list:
+            is_stopped = is_stopped and element.is_stopped()
+        return is_stopped
 
+    @micropython.native
     def step(self) -> Union[int, None]:
         for element in self.element_list:
             element.step()

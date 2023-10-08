@@ -1,3 +1,4 @@
+import micropython
 from machine import Pin
 
 from Element import Element
@@ -23,20 +24,26 @@ class ElementGpio:
     def set_message(self, message: Message):
         self.element.set_message(message)
 
+    @micropython.native
     def get_motor_position(self):
         return self.element.get_motor_position()
 
+    @micropython.native
     def is_stopped(self):
         return self.element.is_stopped()
 
+    @micropython.native
     def step(self):
-        self.element.set_home_pin(
+        element = self.element
+        motor_pin = self.motor_pin
+
+        element.set_home_pin(
             self.sensor_pin.value() == self.hall_sensor_active)
 
-        self.element.step()
+        element.step()
 
-        motor_state = self.element.get_motor_pins()
-        self.motor_pin[0].value(motor_state & (1 << 0))
-        self.motor_pin[1].value(motor_state & (1 << 1))
-        self.motor_pin[2].value(motor_state & (1 << 2))
-        self.motor_pin[3].value(motor_state & (1 << 3))
+        motor_state = element.get_motor_pins()
+        motor_pin[0].value(motor_state & (1 << 0))
+        motor_pin[1].value(motor_state & (1 << 1))
+        motor_pin[2].value(motor_state & (1 << 2))
+        motor_pin[3].value(motor_state & (1 << 3))
