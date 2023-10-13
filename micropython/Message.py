@@ -32,6 +32,9 @@ class Message:
         else:
             return Message(self.rpm, [self.element_delay[key]], [self.element_position[key]])
 
+    def __len__(self):
+        return len(self.element_position)
+
     def get_rpm(self) -> int:
         return self.rpm
 

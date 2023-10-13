@@ -2,7 +2,7 @@ import unittest
 from Message import Message
 
 
-class TestFrame(unittest.TestCase):
+class TestMessage(unittest.TestCase):
     def setUp(self):
         self.message = Message(rpm=5, element_delay=[1, 2, 3], element_position=[5, 6, 7])
 
@@ -26,6 +26,9 @@ class TestFrame(unittest.TestCase):
 
     def test_slice(self):
         self.assertEqual(self.message[1:], Message(5, [2, 3], [6, 7]))
+
+    def test_slice_out_of_range(self):
+        self.assertTrue(not self.message[5:])
 
     def test_word_starting_in_sync(self):
         self.assertEqual(Message.word_starting_in_sync(15, "hello"),

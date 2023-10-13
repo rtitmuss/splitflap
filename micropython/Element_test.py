@@ -23,6 +23,13 @@ class TestModuleMethods(unittest.TestCase):
 
         return motor_pins_list
 
+    def test_not_message(self):
+        self.element.set_message(Message(15, [], []))
+        motor_pins = self.step_until_motor_stopped(home_pin_range=range(0, 2))
+
+        self.assertEqual(len(motor_pins), 1)
+        self.assertEqual(self.element.get_motor_position(), [-2038])
+
     def test_rotate_to_100(self):
         self.element.set_message(Message(15, [0], [100]))
         motor_pins = self.step_until_motor_stopped(home_pin_range=range(0, 2))

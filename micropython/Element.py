@@ -59,6 +59,9 @@ class Element:
         print('panic: {}'.format(error))
 
     def set_message(self, message: Message):
+        if not message:
+            return
+
         self.element_delay = message.get_element_delay()[0]
 
         element_position = message.get_element_position()[0]
@@ -66,11 +69,11 @@ class Element:
         self.element_rotation = element_position // _STEPS_PER_REVOLUTION
 
     @micropython.native
-    def get_motor_position(self):
+    def get_motor_position(self) -> [int]:
         return [self.motor_position if self.panic is None else -1]
 
     @micropython.native
-    def is_stopped(self):
+    def is_stopped(self) -> bool:
         return (self.element_delay == 0
                 and self.motor_position == self.element_position)
 
