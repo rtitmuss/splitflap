@@ -5,6 +5,7 @@ from array import array
 import micropython
 from micropython import const
 
+from StepperMotor import STEPS_PER_REVOLUTION
 from reduce import reduce
 from typing import Union
 from Element import Element
@@ -28,7 +29,7 @@ class Panel:
     def set_rpm(self, rpm):
         # 1 / (15 max_rpm / 60 sec * 2038 steps)= ~1953ms
         self.step_interval_us = math.floor(
-            (1 / (min(Panel.MAX_28BYJ_48_RPM, rpm) / 60 * 2038)) * 1000000)
+            (1 / (min(Panel.MAX_28BYJ_48_RPM, rpm) / 60 * STEPS_PER_REVOLUTION)) * 1000000)
 
     def get_motor_position(self) -> [int]:
         # return reduce(lambda x, y: x + y, map(lambda element: element.get_motor_position(), self.element_list))

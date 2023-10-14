@@ -8,6 +8,7 @@ import micropython
 from machine import Pin, Timer, UART
 from micropython import const
 
+from Display import Display
 from ElementGpio import ElementGpio
 from ElementUart import ElementUart
 from InvertedNeoPixel import InvertedNeoPixel
@@ -17,6 +18,9 @@ from SourceUart import SourceUart
 from SourceWords import SourceWords
 from UartFrame import UartFrame
 from UartMessage import UartMessage
+
+from Config import display_order, display_offsets
+
 
 # primary or downstream panel
 is_picow: bool = True
@@ -106,5 +110,5 @@ def main_loop(source: Source):
         loop_buffer_index = (loop_buffer_index + 1) % loop_buffer_size
 
 
-board_source = SourceWords() if is_picow else SourceUart(uart_upstream)
+board_source = SourceWords(Display(display_order, display_offsets)) if is_picow else SourceUart(uart_upstream)
 main_loop(board_source)

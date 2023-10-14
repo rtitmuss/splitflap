@@ -2,12 +2,11 @@ import select
 
 from micropython import const
 
+from StepperMotor import STEPS_PER_REVOLUTION, stepper_sub
 from typing import Callable
 
 from Message import Message
 from UartMessage import UartMessage
-
-_STEPS_PER_REVOLUTION = const(2038)  # 28BYJ-48
 
 
 # poll factory to allow for unit testing
@@ -24,8 +23,8 @@ def _poll_factory(uart_message: UartMessage):
 def _calculate_steps(motor_position: [int], element_delay: [int], element_position: [int], element_rotation: [int]) \
         -> int:
     return max(
-        (element_position[i] - motor_position[i] + _STEPS_PER_REVOLUTION) % _STEPS_PER_REVOLUTION
-        + element_rotation[i] * _STEPS_PER_REVOLUTION
+        stepper_sub(element_position[i], motor_position[i])
+        + element_rotation[i] * STEPS_PER_REVOLUTION
         + element_delay[i]
         for i in range(len(motor_position))
     )
@@ -49,8 +48,8 @@ class ElementUart:
 
         self.element_delay = message.get_element_delay()
         element_position = message.get_element_position()
-        self.element_position = [pos % _STEPS_PER_REVOLUTION for pos in element_position]
-        self.element_rotation = [pos // _STEPS_PER_REVOLUTION for pos in element_position]
+        self.element_position = [pos % STEPS_PER_REVOLUTION for pos in element_position]
+        self.element_rotation = [pos // STEPS_PER_REVOLUTION for pos in element_position]
 
         send_seq = self.seq
         self.seq += 1
@@ -72,7 +71,7 @@ class ElementUart:
             self.motor_position = motor_position
             if not is_stopped or any(pos < 0 for pos in motor_position):
                 # Fall back to a full rotation if exact motor position is not known
-                self.count = _STEPS_PER_REVOLUTION
+                self.count = STEPS_PER_REVOLUTION
             else:
                 self.count = _calculate_steps(motor_position, self.element_delay, self.element_position,
                                               self.element_rotation)
@@ -99,7 +98,7 @@ class ElementUart:
             else:
                 if motor_position[i] != element_position[i] or element_rotation[i] > 0:
                     motor_position[i] += 1
-                    motor_position[i] = motor_position[i] % _STEPS_PER_REVOLUTION
+                    motor_position[i] = motor_position[i] % STEPS_PER_REVOLUTION
                     if motor_position[i] == element_position[i]:
                         element_rotation[i] -= 1
 

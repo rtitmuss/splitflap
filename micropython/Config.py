@@ -1,6 +1,7 @@
-# letter order when displaying alphabet
+# element order when displaying alphabet
 # display_order = 'abcdefghijkl'
 display_order = 'jifebalkhgdc'
 
-# flap offsets in letter order
-display_offsets = [0] * len(display_order)
+# flap offsets in display order from calibration
+display_offsets = [5,  22, 11,  0,  0,  0,
+                   22,  0,  0,  0,  0,  0]

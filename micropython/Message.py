@@ -1,9 +1,9 @@
 from math import ceil
 
-LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#'
+from StepperMotor import STEPS_PER_REVOLUTION, stepper_add
 
-STEPS_PER_REVOLUTION = 2038  # 28BYJ-48
-STEPS_PER_LETTER = STEPS_PER_REVOLUTION / len(LETTERS)
+LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#'
+_STEPS_PER_LETTER = STEPS_PER_REVOLUTION / len(LETTERS)
 
 
 def _letter_position(letter):
@@ -11,7 +11,7 @@ def _letter_position(letter):
     if index == -1:
         raise ValueError('invalid letter')
 
-    return ceil((index + 0.5) * STEPS_PER_LETTER)
+    return ceil((index + 0.5) * _STEPS_PER_LETTER)
 
 
 class Message:
@@ -45,6 +45,27 @@ class Message:
         return self.element_position
 
     @classmethod
-    def word_starting_in_sync(cls, rpm: int, word: str):
+    def word_start_in_sync(cls, rpm: int, word: str):
         element_position = list(map(_letter_position, word))
         return Message(rpm, [0] * len(element_position), element_position)
+
+    @classmethod
+    def word_start_sweep(cls, rpm: int, word: str, sweep_offset: int):
+        element_position = list(map(_letter_position, word))
+        elements_delay = [int(i * _STEPS_PER_LETTER * sweep_offset) for i in range(len(element_position))]
+        return Message(rpm, elements_delay, element_position)
+
+    @classmethod
+    def word_end_in_sync(cls, rpm: int, word: str, motor_position: [int]):
+        element_position = list(map(_letter_position, word))
+        len_element_position = len(element_position)
+
+        padded_motor_position = motor_position + [0] * (len_element_position - len(motor_position))
+
+        element_steps = \
+            [stepper_add(element_position[i], -padded_motor_position[i]) for i in range(len_element_position)]
+
+        max_steps = max(element_steps)
+        elements_delay = [max_steps - step for step in element_steps]
+
+        return Message(rpm, elements_delay, element_position)

@@ -2,6 +2,7 @@ import unittest
 
 from Element import Element
 from Message import Message
+from StepperMotor import STEPS_PER_REVOLUTION
 
 
 class TestModuleMethods(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestModuleMethods(unittest.TestCase):
 
     def step_until_motor_stopped(self,
                                  home_pin_range=range(0, 0),
-                                 limit=Element.STEPS_PER_REVOLUTION * 2):
+                                 limit=STEPS_PER_REVOLUTION * 2):
         motor_pins_list = []
         while len(motor_pins_list) < limit:
             self.element.set_home_pin(len(motor_pins_list) in home_pin_range)
@@ -78,7 +79,7 @@ class TestModuleMethods(unittest.TestCase):
         self.element.set_message(Message(15, [0], [100]))
         self.step_until_motor_stopped(home_pin_range=range(0, 2))
 
-        self.element.set_message(Message(15, [0], [100 + Element.STEPS_PER_REVOLUTION]))
+        self.element.set_message(Message(15, [0], [100 + STEPS_PER_REVOLUTION]))
         motor_pins = self.step_until_motor_stopped(home_pin_range=range(300, 302))
 
         self.assertEqual(len(motor_pins), 402)

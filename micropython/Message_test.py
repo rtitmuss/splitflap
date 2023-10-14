@@ -30,9 +30,22 @@ class TestMessage(unittest.TestCase):
     def test_slice_out_of_range(self):
         self.assertTrue(not self.message[5:])
 
-    def test_word_starting_in_sync(self):
-        self.assertEqual(Message.word_starting_in_sync(15, "hello"),
+    def test_word_start_in_sync(self):
+        self.assertEqual(Message.word_start_in_sync(15, "hello"),
                          Message(15, [0, 0, 0, 0, 0], [385, 250, 567, 567, 702]))
+
+    def test_word_start_sweep(self):
+        self.assertEqual(Message.word_start_sweep(15, "hello", 2),
+                         Message(15, [0, 90, 181, 271, 362], [385, 250, 567, 567, 702]))
+
+    def test_word_end_in_sync(self):
+        self.assertEqual(Message.word_end_in_sync(15, "hello", [0, 0, 0, 0, 0]),
+                         Message(15, [317, 452, 135, 135, 0], [385, 250, 567, 567, 702]))
+
+    def test_word_end_in_sync_stopped_letter(self):
+        self.assertEqual(Message.word_end_in_sync(15, "hello", [0, 0, 0, 0, 702]),
+                         Message(15, [182, 317, 0, 0, 567], [385, 250, 567, 567, 702]))
+
 
 if __name__ == '__main__':
     unittest.main()

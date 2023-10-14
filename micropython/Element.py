@@ -3,13 +3,12 @@ from array import array
 import micropython
 from micropython import const
 
+from StepperMotor import STEPS_PER_REVOLUTION
 from typing import Union
 from Message import Message
 
-_STEPS_PER_REVOLUTION = const(2038)  # 28BYJ-48
-
-_MAX_HOME_STEPS = int(_STEPS_PER_REVOLUTION * 0.2)
-_MAX_NON_HOME_STEPS = int(_STEPS_PER_REVOLUTION * 1.2)
+_MAX_HOME_STEPS = int(STEPS_PER_REVOLUTION * 0.2)
+_MAX_NON_HOME_STEPS = int(STEPS_PER_REVOLUTION * 1.2)
 
 _MOT_PHASE_A = const(0b00001000)
 _MOT_PHASE_B = const(0b00000100)
@@ -25,8 +24,6 @@ _STEP_PATTERN_LENGTH = len(_STEP_PATTERN)
 
 
 class Element:
-    STEPS_PER_REVOLUTION = _STEPS_PER_REVOLUTION
-
     def __init__(self):
         # True if error is detected
         self.panic: Union[str, None] = None
@@ -42,8 +39,8 @@ class Element:
         self.count_non_home_steps: int = 0
 
         # motor and target letter positions
-        self.motor_position: int = -_STEPS_PER_REVOLUTION
-        self.element_position: int = -_STEPS_PER_REVOLUTION
+        self.motor_position: int = -STEPS_PER_REVOLUTION
+        self.element_position: int = -STEPS_PER_REVOLUTION
         self.element_rotation: int = 0
         self.element_delay: int = 0
 
@@ -65,8 +62,8 @@ class Element:
         self.element_delay = message.get_element_delay()[0]
 
         element_position = message.get_element_position()[0]
-        self.element_position = element_position % _STEPS_PER_REVOLUTION
-        self.element_rotation = element_position // _STEPS_PER_REVOLUTION
+        self.element_position = element_position % STEPS_PER_REVOLUTION
+        self.element_rotation = element_position // STEPS_PER_REVOLUTION
 
     def get_motor_position(self) -> [int]:
         return [self.motor_position if self.panic is None else -1]
