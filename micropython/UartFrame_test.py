@@ -27,7 +27,7 @@ class UartFrameTest(unittest.TestCase):
 
     def test_send_frame(self):
         self.uartFrame.send_frame(b'ab\x7E\x7Dcd')
-        self.assertEqual(self.uartMock.buffer, [0x7e, 0x61, 0x62, 0x7d, 0x7e, 0x7d, 0x7d, 0x63, 0x64, 0x7e])
+        self.assertEqual(self.uartMock.buffer, b'\x7Eab\x7D\x7E\x7D\x7Dcd\x7E')
 
     def test_recv_frame(self):
         self.uartMock.write(b'\x7Eab\x7D\x7E\x7D\x7Dcd\x7E')
