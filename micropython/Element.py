@@ -68,16 +68,13 @@ class Element:
         self.element_position = element_position % _STEPS_PER_REVOLUTION
         self.element_rotation = element_position // _STEPS_PER_REVOLUTION
 
-    @micropython.native
     def get_motor_position(self) -> [int]:
         return [self.motor_position if self.panic is None else -1]
 
-    @micropython.native
     def is_stopped(self) -> bool:
         return (self.element_delay == 0
                 and self.motor_position == self.element_position)
 
-    @micropython.native
     def step(self):
         if self.home_pin is None:
             raise ValueError('home_pin not set')
@@ -113,3 +110,13 @@ class Element:
             self.motor_pins = 0
 
         self.home_pin = None
+
+
+# ignore micropython.native with unit tests on laptop
+try:
+    from micropython import native
+    Element.get_motor_position = native(Element.get_motor_position)
+    Element.is_stopped = native(Element.is_stopped)
+    Element.step = native(Element.step)
+except ImportError:
+    pass

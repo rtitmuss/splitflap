@@ -23,7 +23,7 @@ class TestModuleMethods(unittest.TestCase):
 
         return motor_pins_list
 
-    def test_not_message(self):
+    def test_empty_message(self):
         self.element.set_message(Message(15, [], []))
         motor_pins = self.step_until_motor_stopped(home_pin_range=range(0, 2))
 
