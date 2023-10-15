@@ -1,3 +1,4 @@
+import random
 from math import ceil
 
 from StepperMotor import STEPS_PER_REVOLUTION, stepper_add
@@ -53,6 +54,13 @@ class Message:
     def word_start_sweep(cls, rpm: int, word: str, sweep_offset: int):
         element_position = list(map(_letter_position, word))
         elements_delay = [int(i * _STEPS_PER_LETTER * sweep_offset) for i in range(len(element_position))]
+        return Message(rpm, elements_delay, element_position)
+
+    @classmethod
+    def word_random(cls, rpm: int, word: str, sweep_offset: int):
+        element_position = list(map(_letter_position, word))
+        random_delay = list(random.shuffle(range(len(element_position))))
+        elements_delay = [int(i * _STEPS_PER_LETTER * sweep_offset) for i in random_delay]
         return Message(rpm, elements_delay, element_position)
 
     @classmethod

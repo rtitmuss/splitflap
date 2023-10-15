@@ -15,6 +15,10 @@ class Display:
         self.display_offsets = display_offsets
         self.physical_indices = list(map(lambda x: ord(x) - ord('a'), display_order))
 
+    def adjust_word(self, word: str) -> str:
+        word_len = len(self.physical_indices)
+        return (word + ' ' * (word_len - len(word)))[:word_len]
+
     def virtual_to_physical(self, message: Message) -> Message:
         rpm = message.get_rpm()
         element_delay = message.get_element_delay()

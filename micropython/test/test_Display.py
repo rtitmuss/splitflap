@@ -7,6 +7,10 @@ class TestDisplay(unittest.TestCase):
     def setUp(self):
         self.display = Display("ba", [10, 20])
 
+    def test_adjust_word(self):
+        self.assertEqual(self.display.adjust_word("a"), "a ")
+        self.assertEqual(self.display.adjust_word("abc"), "ab")
+
     def test_virtual_to_physical(self):
         message = self.display.virtual_to_physical(Message(15, [11, 22], [33, 2030]))
 
