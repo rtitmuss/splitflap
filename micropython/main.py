@@ -3,6 +3,7 @@ import math
 import time
 
 from array import array
+from random import randint
 
 import micropython
 from machine import Pin, Timer, UART
@@ -93,6 +94,9 @@ def main_loop(source: Source):
             loop_variance = sum((x - loop_average_time) ** 2 for x in loop_buffer) / (loop_buffer_size - 1)
             loop_std_deviation = math.sqrt(loop_variance)
             print("loop: {:.2f}us +/-{:.2f}; interval {}us".format(loop_average_time, loop_std_deviation, interval_us))
+
+            neopixel.fill((randint(0, 255), randint(0, 255), randint(0, 255)))
+            neopixel.write()
 
             gc.collect()
             print('mem_free:', gc.mem_free())
