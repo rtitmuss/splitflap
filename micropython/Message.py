@@ -7,6 +7,13 @@ LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#'
 _STEPS_PER_LETTER = STEPS_PER_REVOLUTION / len(LETTERS)
 
 
+def _fisher_yates_shuffle(arr):
+    for i in range(len(arr) - 1, 0, -1):
+        j = random.randint(0, i)
+        arr[i], arr[j] = arr[j], arr[i]
+    return arr
+
+
 def _letter_position(letter):
     index = LETTERS.find(letter.upper())
     if index == -1:
@@ -59,7 +66,7 @@ class Message:
     @classmethod
     def word_random(cls, rpm: int, word: str, sweep_offset: int):
         element_position = list(map(_letter_position, word))
-        random_delay = list(random.shuffle(range(len(element_position))))
+        random_delay = _fisher_yates_shuffle(list(range(len(element_position))))
         elements_delay = [int(i * _STEPS_PER_LETTER * sweep_offset) for i in random_delay]
         return Message(rpm, elements_delay, element_position)
 
