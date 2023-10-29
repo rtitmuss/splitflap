@@ -1,5 +1,5 @@
 from Message import Message
-from StepperMotor import stepper_sub, stepper_add
+from StepperMotor import stepper_add_offset, stepper_sub_offset
 
 
 def reorder(data, default, indices):
@@ -29,7 +29,7 @@ class Display:
         element_position = message.get_element_position()
 
         display_offsets = self.display_offsets
-        offset_position = [stepper_add(element_position[i], display_offsets[i]) for i in range(len(element_position))]
+        offset_position = [stepper_add_offset(element_position[i], display_offsets[i]) for i in range(len(element_position))]
 
         physical_delay = reorder(element_delay, 0, self.physical_indices)
         physical_position = reorder(offset_position, 0, self.physical_indices)
@@ -40,6 +40,6 @@ class Display:
         offset_position = reorder(motor_position, 0, self.virtual_indices)
 
         display_offsets = self.display_offsets
-        virtual_position = [stepper_sub(offset_position[i], display_offsets[i]) for i in range(len(offset_position))]
+        virtual_position = [stepper_sub_offset(offset_position[i], display_offsets[i]) for i in range(len(offset_position))]
 
         return virtual_position

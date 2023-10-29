@@ -1,7 +1,7 @@
 import random
 from math import ceil
 
-from StepperMotor import STEPS_PER_REVOLUTION, stepper_add
+from StepperMotor import STEPS_PER_REVOLUTION, stepper_sub_offset
 
 LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-?!$&#'
 _STEPS_PER_LETTER = STEPS_PER_REVOLUTION / len(LETTERS)
@@ -77,10 +77,15 @@ class Message:
 
         padded_motor_position = motor_position + [0] * (len_element_position - len(motor_position))
 
+        for i, position in enumerate(element_position):
+            if padded_motor_position[i] == position:
+                element_position[i] += STEPS_PER_REVOLUTION
+
         element_steps = \
-            [stepper_add(element_position[i], -padded_motor_position[i]) for i in range(len_element_position)]
+            [stepper_sub_offset(element_position[i], padded_motor_position[i]) for i in range(len_element_position)]
 
         max_steps = max(element_steps)
+
         elements_delay = [max_steps - step for step in element_steps]
 
         return Message(rpm, elements_delay, element_position)

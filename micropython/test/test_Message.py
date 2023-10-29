@@ -44,7 +44,7 @@ class TestMessage(unittest.TestCase):
 
     def test_word_end_in_sync_stopped_letter(self):
         self.assertEqual(Message.word_end_in_sync(15, "hello", [0, 0, 0, 0, 702]),
-                         Message(15, [182, 317, 0, 0, 567], [385, 250, 567, 567, 702]))
+                         Message(15, [182, 317, 0, 0, 567], [385, 250, 567, 567, 2038 + 702]))
 
 
 if __name__ == '__main__':

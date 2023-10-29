@@ -10,3 +10,11 @@ def stepper_add(x: int, y: int) -> int:
 
 def stepper_sub(x: int, y: int) -> int:
     return (x - y + STEPS_PER_REVOLUTION) % STEPS_PER_REVOLUTION
+
+
+def stepper_add_offset(x: int, y: int) -> int:
+    return stepper_add(x, y) + (x // STEPS_PER_REVOLUTION) * STEPS_PER_REVOLUTION
+
+
+def stepper_sub_offset(x: int, y: int) -> int:
+    return stepper_sub(x, y) + (x // STEPS_PER_REVOLUTION) * STEPS_PER_REVOLUTION
