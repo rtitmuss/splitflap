@@ -13,7 +13,11 @@ def reorder(data, default, indices):
 class Display:
     def __init__(self, display_order: str, display_offsets: [int]):
         self.display_offsets = display_offsets
-        self.physical_indices = list(map(lambda x: ord(x) - ord('a'), display_order))
+        self.physical_indices = [ord(char) - ord('a') for char in display_order]
+
+        self.virtual_indices = [0] * len(self.physical_indices)
+        for i, index in enumerate(self.physical_indices):
+            self.virtual_indices[index] = i
 
     def adjust_word(self, word: str) -> str:
         word_len = len(self.physical_indices)
@@ -33,7 +37,7 @@ class Display:
         return Message(rpm, physical_delay, physical_position)
 
     def physical_to_virtual(self, motor_position: [int]) -> [int]:
-        offset_position = reorder(motor_position, 0, self.physical_indices)
+        offset_position = reorder(motor_position, 0, self.virtual_indices)
 
         display_offsets = self.display_offsets
         virtual_position = [stepper_sub(offset_position[i], display_offsets[i]) for i in range(len(offset_position))]
