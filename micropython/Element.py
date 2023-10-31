@@ -69,7 +69,7 @@ class Element:
         return [self.motor_position if self.panic is None else -1]
 
     def is_stopped(self) -> bool:
-        return (self.element_delay == 0
+        return self.panic or (self.element_delay == 0
                 and self.motor_position == self.element_position)
 
     def step(self):

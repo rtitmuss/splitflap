@@ -31,6 +31,11 @@ class TestModuleMethods(unittest.TestCase):
         self.assertEqual(len(motor_pins), 1)
         self.assertEqual(self.element.get_motor_position(), [-2038])
 
+    def test_is_not_stopped(self):
+        self.element.set_message(Message(15, [0], [100]))
+
+        self.assertEqual(self.element.is_stopped(), False)
+
     def test_rotate_to_100(self):
         self.element.set_message(Message(15, [0], [100]))
         motor_pins = self.step_until_motor_stopped(home_pin_range=range(0, 2))
@@ -96,6 +101,7 @@ class TestModuleMethods(unittest.TestCase):
         motor_pins = self.step_until_motor_stopped()
 
         self.assertTrue(len(motor_pins) > 0)
+        self.assertTrue(self.element.is_stopped())
         self.assertEqual(self.element.get_motor_pins(), 0)
         self.assertEqual(self.element.get_motor_position(), [-1])
 
@@ -104,6 +110,7 @@ class TestModuleMethods(unittest.TestCase):
         motor_pins = self.step_until_motor_stopped(home_pin_range=range(0, 500))
 
         self.assertTrue(len(motor_pins) > 0)
+        self.assertTrue(self.element.is_stopped())
         self.assertEqual(self.element.get_motor_pins(), 0)
         self.assertEqual(self.element.get_motor_position(), [-1])
 
