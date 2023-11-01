@@ -13,7 +13,29 @@ class SourceWords(Source):
         self.words = words
         self.display = display
         self.i = 0
-        self.last_i = None
+        self.last_word = None
+
+    def pick_random_words(self, max_len: int) -> str:
+        while True:
+            words = []
+            words_length = 0
+
+            while words_length <= max_len:  # Add 1 for the space between words
+                rand_word = random.choice(self.words)
+                rand_word_len = len(rand_word)
+
+                if words_length + rand_word_len <= max_len:
+                    words.append(rand_word)
+                    words_length += rand_word_len + 1  # Add 1 for the space between words
+                else:
+                    break
+
+            word = ' '.join(words)
+            if word != self.last_word:
+                break
+
+        self.last_word = word
+        return word
 
     def load_message(self, is_stopped: bool, physical_motor_position: [int]) -> Union[Message, None]:
         if not is_stopped:
@@ -23,25 +45,17 @@ class SourceWords(Source):
 
         motor_position = self.display.physical_to_virtual(physical_motor_position)
 
-        while True:
-            rand_i = random.randint(0, len(self.words) - 1)
-            if rand_i != self.last_i:
-                break
-        self.last_i = rand_i
-        src_word = self.words[rand_i]
-
-        # src_word = self.words[self.i % len(_WORDS)]
-        self.i += 1
-
         # clock
         # (year, month, mday, hour, minute, second, weekday, yearday) = time.localtime()
         # src_word = "{:02d}{:02d}{:02d}{:02d}{:02d}{:02d}".format(hour, minute, second, mday, month, year % 100)
 
+        src_word = self.pick_random_words(self.display.display_length())
         word = self.display.adjust_word(src_word)
 
-        print('word:', word)
+        print('word: \'{}\''.format(word))
         print('motor_position:', motor_position)
 
+        self.i += 1
         c = self.i % 4
         if c == 0:
             message = Message.word_start_in_sync(15, word)
@@ -52,6 +66,6 @@ class SourceWords(Source):
         else:
             message = Message.word_random(15, word, 2)
 
-        message = Message.word_start_sweep(15, word, 4)
+        message = Message.word_start_sweep(15, word, 6)
 
         return self.display.virtual_to_physical(message)

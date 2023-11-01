@@ -7,6 +7,9 @@ class TestDisplay(unittest.TestCase):
     def setUp(self):
         self.display = Display("bca", [10, 20, 30])
 
+    def test_display_length(self):
+        self.assertEqual(self.display.display_length(), 3)
+
     def test_adjust_word(self):
         self.assertEqual(self.display.adjust_word("a"), "a  ")
         self.assertEqual(self.display.adjust_word("abcd"), "abc")

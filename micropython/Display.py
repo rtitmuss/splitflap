@@ -19,6 +19,9 @@ class Display:
         for i, index in enumerate(self.physical_indices):
             self.virtual_indices[index] = i
 
+    def display_length(self) -> int:
+        return len(self.physical_indices)
+
     def adjust_word(self, word: str) -> str:
         word_len = len(self.physical_indices)
         return (word + ' ' * (word_len - len(word)))[:word_len]

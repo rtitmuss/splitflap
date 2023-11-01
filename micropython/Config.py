@@ -10,17 +10,19 @@ _alphabet = 'abcdefghijklmnopqrstuvwxyz'
 _display_len = len(display_order)
 
 test_words = [
-    _alphabet,
-    _alphabet[3:],
-    _alphabet[6:],
+    # display length words
+    _alphabet[:_display_len],
+    _alphabet[3:3 + _display_len],
+    _alphabet[6:6 + _display_len],
     "A" * _display_len,
     "B" * _display_len,
     "Y" * _display_len,
     "Z" * _display_len,
-    "Hello  World", "Spirit", "Purple", "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
-    "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital", "Orbit", "Pepper",
-    "7849501273", "2398756104", "5476928310", "1062547983", "3987165420",
     "$" * _display_len,
     "&" * _display_len,
-    "$#$#$#$#$##$#$#$#$#$",
+    "$#" * int(_display_len / 2) + "#$" * int(_display_len / 2),
+    # short words
+    "Hello", "World", "Spirit", "Purple", "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
+    "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital", "Orbit", "Pepper",
+    "7849501273", "2398756104", "5476928310", "1062547983", "3987165420",
 ]
