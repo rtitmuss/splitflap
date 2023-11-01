@@ -44,6 +44,18 @@ class Element:
         self.element_rotation: int = 0
         self.element_delay: int = 0
 
+    def __str__(self):
+        state = []
+        if self.panic:
+            state.append('panic={}'.format(self.panic))
+        if self.element_delay > 0:
+            state.append('delay={}'.format(self.element_delay))
+        if not self.is_stopped():
+            if self.element_rotation:
+                state.append('rotation={}'.format(self.element_rotation))
+            state.append('position={}'.format(self.element_position))
+        return 'Element: motor={} {}'.format(self.motor_position, ' '.join(state))
+
     def set_home_pin(self, home_pin):
         self.home_pin = home_pin
 
@@ -70,7 +82,7 @@ class Element:
 
     def is_stopped(self) -> bool:
         return self.panic or (self.element_delay == 0
-                and self.motor_position == self.element_position)
+                              and self.motor_position == self.element_position)
 
     def step(self):
         if self.home_pin is None:

@@ -42,6 +42,22 @@ class ElementUart:
         self.motor_position = []
         self.count = 0
 
+    def __str__(self):
+        def _element_str_(i: int):
+            state = ['motor={}'.format(self.motor_position[i])]
+            if self.element_delay[i] > 0:
+                state.append('delay={}'.format(self.element_delay[i]))
+            if self.element_rotation[i] > 0:
+                state.append('rotation={}'.format(self.element_rotation[i]))
+            if self.element_position[i] != self.motor_position[i]:
+                state.append('position={}'.format(self.element_position[i]))
+            return ' '.join(state)
+
+        return 'ElementUart: count={}\n{}'.format(
+            self.count,
+            '\n'.join('  {}'.format(_element_str_(i)) for i in range(len(self.motor_position)))
+        )
+
     def set_message(self, message: Message):
         if not message:
             return
@@ -99,7 +115,7 @@ class ElementUart:
                 if motor_position[i] != element_position[i] or element_rotation[i] > 0:
                     motor_position[i] += 1
                     motor_position[i] = motor_position[i] % STEPS_PER_REVOLUTION
-                    if motor_position[i] == element_position[i]:
+                    if motor_position[i] == element_position[i] and element_rotation[i] > 0:
                         element_rotation[i] -= 1
 
 

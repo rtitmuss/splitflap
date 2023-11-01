@@ -21,6 +21,9 @@ class ElementGpio:
             map(lambda x: Pin(x, Pin.OUT, value=0),
                 [motor_a, motor_b, motor_c, motor_d]))
 
+    def __str__(self):
+        return str(self.element)
+
     def set_message(self, message: Message):
         self.element.set_message(message)
 

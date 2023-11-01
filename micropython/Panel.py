@@ -1,12 +1,8 @@
 import math
 
-from array import array
-
-import micropython
 from micropython import const
 
 from StepperMotor import STEPS_PER_REVOLUTION
-from reduce import reduce
 from typing import Union
 from Element import Element
 from Message import Message
@@ -20,6 +16,11 @@ class Panel:
         self.element_list = element_list
         self.set_rpm(Panel.MAX_28BYJ_48_RPM)
         return
+
+    def __str__(self):
+        state = '\n'.join(str(element) for element in self.element_list)
+        return ('Panel: is_stopped={}\n{}'
+                .format(self.is_stopped(), '\n'.join(['  ' + line for line in state.split('\n')])))
 
     def set_message(self, message: Message):
         self.set_rpm(message.rpm)
