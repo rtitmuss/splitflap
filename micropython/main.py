@@ -20,7 +20,7 @@ from SourceWords import SourceWords
 from UartFrame import UartFrame
 from UartMessage import UartMessage
 
-from Config import display_order, display_offsets
+import Config
 
 
 # primary or downstream panel
@@ -114,5 +114,6 @@ def main_loop(source: Source):
         loop_buffer_index = (loop_buffer_index + 1) % loop_buffer_size
 
 
-board_source = SourceWords(Display(display_order, display_offsets)) if is_picow else SourceUart(uart_upstream)
+board_source = SourceWords(Config.test_words, Display(Config.display_order, Config.display_offsets)) \
+    if is_picow else SourceUart(uart_upstream)
 main_loop(board_source)
