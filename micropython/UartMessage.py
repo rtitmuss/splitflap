@@ -13,9 +13,14 @@ _CMD_ACK = const(0xf2)
 class UartMessage():
     def __init__(self, uart_frame: UartFrame):
         self.uart_frame = uart_frame
+        self.send_seq = 0
 
     def uart(self):
         return self.uart_frame.uart
+
+    def next_seq(self) -> int:
+        self.send_seq += 1
+        return self.send_seq
 
     def send_message(self, seq: int, message: Message):
         n = len(message.get_element_position())

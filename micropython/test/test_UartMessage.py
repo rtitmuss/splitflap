@@ -48,6 +48,11 @@ class UartMessageTest(unittest.TestCase):
         result = self.uart_message.recv_ack()
         self.assertIsNone(result)
 
+    def test_next_seq(self):
+        seq1 = self.uart_message.next_seq()
+        seq2 = self.uart_message.next_seq()
+        self.assertEqual(seq1 + 1, seq2)
+
 
 if __name__ == '__main__':
     unittest.main()

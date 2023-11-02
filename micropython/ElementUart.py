@@ -34,7 +34,6 @@ class ElementUart:
     def __init__(self, uart_message: UartMessage, poll_factory: Callable = _poll_factory):
         self.poll = poll_factory(uart_message)
         self.uart_message = uart_message
-        self.seq = 0
 
         self.element_delay = []
         self.element_position = []
@@ -67,9 +66,7 @@ class ElementUart:
         self.element_position = [pos % STEPS_PER_REVOLUTION for pos in element_position]
         self.element_rotation = [pos // STEPS_PER_REVOLUTION for pos in element_position]
 
-        send_seq = self.seq
-        self.seq += 1
-
+        send_seq = self.uart_message.next_seq()
         self.uart_message.send_message(send_seq, message)
 
         while self.poll(100):

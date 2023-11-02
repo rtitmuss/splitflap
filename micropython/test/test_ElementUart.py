@@ -15,6 +15,9 @@ class UartMessageMock():
     def uart(self):
         return 9876
 
+    def next_seq(self) -> int:
+        return 0
+
     def send_message(self, seq: int, message: Message):
         self.seq = seq
         self.message = message
@@ -39,15 +42,6 @@ class ElementUartTest(unittest.TestCase):
         self.elementUart.set_message(Message(15, [], []))
         self.assertTrue(self.elementUart.is_stopped())
         self.assertEqual(self.elementUart.get_motor_position(), [])
-
-    def test_set_message_diff_seq(self):
-        self.elementUart.set_message(self.message)
-        first_seq = self.uartMessageMock.seq
-
-        self.elementUart.set_message(self.message)
-        second_seq = self.uartMessageMock.seq
-
-        self.assertNotEqual(first_seq, second_seq)
 
     def test_set_message_with_ack(self):
         self.elementUart.set_message(self.message)
