@@ -28,6 +28,9 @@ class Message:
         self.element_delay = element_delay
         self.element_position = element_position
 
+    def __str__(self):
+        return 'rpm: {}, delay: {}, position: {}'.format(self.rpm, self.element_delay, self.element_position)
+
     def __eq__(self, other):
         return self.rpm == other.rpm \
             and self.element_delay == other.element_delay \
