@@ -2,13 +2,65 @@
 <html>
 <head>
     <title>Split Flap</title>
+    <script>
+        const randomWords = [
+            "apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon",
+            "Hello", "World", "Spirit", "Purple", "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
+            "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital", "Orbit", "Pepper",
+            "7849501273", "2398756104", "5476928310", "1062547983", "3987165420",
+            "abcdefghijklmnopqrst", "defghijklmnopqrstuvw", "ghijklmnopqrstuvwxyz",
+            "A".repeat(20), "B".repeat(20), "Y".repeat(20), "Z".repeat(20),
+            "$".repeat(20), "&".repeat(20), "$#".repeat(10) + "#$".repeat(10),
+        ];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function submitForm() {
+            fetch(form.action, {
+                method: "post",
+                body: new URLSearchParams(new FormData(form)) // application/x-www-form-urlencoded
+            });
+        }
+
+        function fillWithRandomWords() {
+            const textInput = document.getElementById("text_input");
+            shuffleArray(randomWords);
+
+            const words = [];
+            let words_len = 0;
+
+            for (const word of randomWords) {
+                if (words_len + word.length <= 20) {
+                    words.push(word);
+                    words_len += word.length + 1;
+                } else {
+                    break;
+                }
+            }
+
+            console.log(randomWords)
+
+            textInput.value = words.join(' ');
+            submitForm();
+        }
+    </script>
 </head>
 <body>
     <h1>Split Flap</h1>
     <form method="post" action="/display">
+        <label for="rpm">Select RPM (5-15):</label>
+        <input type="number" id="rpm" name="rpm" min="5" max="15" value="15" required>
+        <br>
         <label for="text_input">Enter up to 20 characters:</label>
         <input type="text" id="text_input" name="text" maxlength="20">
+        <br>
         <input type="submit" value="Submit">
+        <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
     </form>
 
     <script>
@@ -16,11 +68,7 @@
 
         form.addEventListener("submit", function(event){
             event.preventDefault();
-
-            fetch(form.action, {
-                method: "post",
-                body: new URLSearchParams(new FormData(form)) // application/x-www-form-urlencoded
-            });
+            submitForm();
         });
     </script>
 </body>
