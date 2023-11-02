@@ -1,11 +1,15 @@
 import random
 import time
 
+from micropython import const
+
 from Display import Display
 from typing import Union
 
 from Message import Message
 from Source import Source
+
+_RPM = const(10)
 
 
 class SourceWords(Source):
@@ -58,14 +62,12 @@ class SourceWords(Source):
         self.i += 1
         c = self.i % 4
         if c == 0:
-            message = Message.word_start_in_sync(15, word)
+            message = Message.word_start_in_sync(_RPM, word)
         elif c == 1:
-            message = Message.word_end_in_sync(15, word, motor_position)
+            message = Message.word_end_in_sync(_RPM, word, motor_position)
         elif c == 2:
-            message = Message.word_start_sweep(15, word, 2)
+            message = Message.word_start_sweep(_RPM, word, 2)
         else:
-            message = Message.word_random(15, word, 2)
-
-        message = Message.word_start_sweep(15, word, 6)
+            message = Message.word_random(_RPM, word, 2)
 
         return self.display.virtual_to_physical(message)
