@@ -5,6 +5,7 @@ import time
 from array import array
 from random import randint
 
+import machine
 import micropython
 from machine import Pin, Timer, UART
 from micropython import const
@@ -68,6 +69,12 @@ panel = Panel([
 ])
 
 
+def downstream_machine_reset():
+    seq = uart_downstream.next_seq()
+    uart_downstream.send_machine_reset(seq)
+    # TODO wait for ack
+
+
 @micropython.native
 def main_loop(source: Source):
     # loop metrics
@@ -87,6 +94,12 @@ def main_loop(source: Source):
 
         message = source.load_message(is_stopped, panel.get_motor_position())
         if message:
+            if message == UartMessage.MACHINE_RESET_MESSAGE:
+                downstream_machine_reset()
+                print("machine reset")
+                time.sleep_ms(500)
+                machine.reset()
+
             panel.set_message(message)
 
             # loop metrics
@@ -116,4 +129,9 @@ def main_loop(source: Source):
 
 board_source = SourceWords(Config.test_words, Display(Config.display_order, Config.display_offsets)) \
     if is_picow else SourceUart(uart_upstream)
+
+if is_picow:
+    downstream_machine_reset()
+    time.sleep_ms(1000)
+
 main_loop(board_source)

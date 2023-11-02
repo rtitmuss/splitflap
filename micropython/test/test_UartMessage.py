@@ -31,6 +31,13 @@ class UartMessageTest(unittest.TestCase):
         self.assertEqual(seq, 99)
         self.assertEqual(send_message, recv_message)
 
+    def test_machine_reset(self):
+        self.uart_message.send_machine_reset(99)
+        seq, recv_message = self.uart_message.recv_message()
+        self.assertEqual(seq, 99)
+        self.assertEqual(UartMessage.MACHINE_RESET_MESSAGE, recv_message)
+        self.assertTrue(recv_message)
+
     def test_message_timeout(self):
         self.uart_message.buffer = None
         result = self.uart_message.recv_message()

@@ -8,9 +8,12 @@ from UartFrame import UartFrame
 
 _CMD_MSG = const(0xf1)
 _CMD_ACK = const(0xf2)
+_CMD_RST = const(0xf3)
 
 
-class UartMessage():
+class UartMessage:
+    MACHINE_RESET_MESSAGE = Message(0, [0], [0])
+
     def __init__(self, uart_frame: UartFrame):
         self.uart_frame = uart_frame
         self.send_seq = 0
@@ -28,6 +31,10 @@ class UartMessage():
                             message.get_rpm(), *message.get_element_delay(), *message.get_element_position())
         self.uart_frame.send_frame(frame)
 
+    def send_machine_reset(self, seq: int):
+        frame = struct.pack('BBB', _CMD_RST, seq, 0)
+        self.uart_frame.send_frame(frame)
+
     def recv_message(self) -> Union[Tuple[int, Message], None]:
         frame = self.uart_frame.recv_frame()
         if frame:
@@ -40,6 +47,10 @@ class UartMessage():
                 element_delay = list(data[3:3+n])
                 element_position = list(data[3+n:])
                 return seq, Message(rpm, element_delay, element_position)
+
+            if data[0] == _CMD_RST:
+                seq = data[1]
+                return seq, UartMessage.MACHINE_RESET_MESSAGE
         else:
             return None
 
