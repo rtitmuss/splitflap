@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Split Flap</title>
+</head>
+<body>
+    <h1>Split Flap</h1>
+    <form method="post" action="/display">
+        <label for="text_input">Enter up to 20 characters:</label>
+        <input type="text" id="text_input" name="text" maxlength="20">
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        let form = document.querySelector("form");
+
+        form.addEventListener("submit", function(event){
+            event.preventDefault();
+
+            fetch(form.action, {
+                method: "post",
+                body: new URLSearchParams(new FormData(form)) // application/x-www-form-urlencoded
+            });
+        });
+    </script>
+</body>
+
+</html>

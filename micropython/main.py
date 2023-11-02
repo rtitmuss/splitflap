@@ -16,13 +16,14 @@ from ElementUart import ElementUart
 from InvertedNeoPixel import InvertedNeoPixel
 from Panel import Panel
 from Source import Source
+from SourceHttpd import SourceHttpd
 from SourceUart import SourceUart
 from SourceWords import SourceWords
 from UartFrame import UartFrame
 from UartMessage import UartMessage
+from Wifi import wifi_connect
 
 import Config
-
 
 # primary or downstream panel
 is_picow: bool = True
@@ -127,11 +128,14 @@ def main_loop(source: Source):
         loop_buffer_index = (loop_buffer_index + 1) % loop_buffer_size
 
 
-board_source = SourceWords(Config.test_words, Display(Config.display_order, Config.display_offsets)) \
-    if is_picow else SourceUart(uart_upstream)
-
 if is_picow:
+    wifi_connect()
     downstream_machine_reset()
     time.sleep_ms(1000)
+
+    # board_source = SourceWords(Config.test_words, Display(Config.display_order, Config.display_offsets))
+    board_source = SourceHttpd(Display(Config.display_order, Config.display_offsets), 80)
+else:
+    board_source = SourceUart(uart_upstream)
 
 main_loop(board_source)
