@@ -21,20 +21,27 @@ class SourceHttpdTest(unittest.TestCase):
     def test_process_post_display(self):
         status = self.source_httpd.process_post_display('POST /display\r\n\r\ntext=foo'.encode('utf-8'))
         self.assertEqual(status, (200, b''))
-        self.assertEqual(self.source_httpd.queue[0], {"text": "foo"})
+        self.assertEqual(self.source_httpd.display_queue[0], {"text": "foo"})
 
     def test_process_post_display_bad_request(self):
         status = self.source_httpd.process_post_display('POST /display\r\n\r\n'.encode('utf-8'))
         self.assertEqual(status, (400, b''))
-        self.assertFalse(self.source_httpd.queue)
+        self.assertFalse(self.source_httpd.display_queue)
 
-    def test_form_data_to_message(self):
-        message = self.source_httpd.form_data_to_message({"text": "foo"}, [])
+    def test_display_data_to_message(self):
+        message, interval_ms = self.source_httpd.display_data_to_message({"text": "foo"}, [])
         self.assertEqual(message, Message(15, [0, 0, 0], [295, 702, 702]))
+        self.assertIsNone(interval_ms)
 
-    def test_form_data_to_message_with_rpm(self):
-        message = self.source_httpd.form_data_to_message({"text": "foo", "rpm": "10"}, [])
+    def test_display_data_to_message_with_rpm(self):
+        message, interval_ms = self.source_httpd.display_data_to_message({"text": "foo", "rpm": "10"}, [])
         self.assertEqual(message, Message(10, [0, 0, 0], [295, 702, 702]))
+        self.assertIsNone(interval_ms)
+
+    def test_display_data_to_message_with_clock(self):
+        message, interval_ms = self.source_httpd.display_data_to_message({"text": "{clock}"}, [])
+        self.assertIsInstance(message, Message)
+        self.assertIsInstance(interval_ms, int)
 
 
 if __name__ == '__main__':

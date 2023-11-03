@@ -96,6 +96,12 @@
             textInput.value = words.join(' ');
             submitForm();
         }
+
+        async function preset(text_preset) {
+            const textInput = document.getElementById("text_input");
+            textInput.value = text_preset;
+            submitForm();
+        }
     </script>
 </head>
 <body>
@@ -129,6 +135,9 @@
         <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
     </form>
     <p id="errorMessage" style="color: red; display: none;">Error. Please try again.</p>
+    <p>
+        <a href="#" onclick="preset('{clock}')">Clock</a><br/>
+    </p>
 </body>
 
 </html>
