@@ -38,6 +38,10 @@ class TestMessage(unittest.TestCase):
         self.assertEqual(Message.word_sweep(15, "hello", 2),
                          Message(15, [0, 90, 181, 271, 362], [385, 250, 567, 567, 702]))
 
+    def test_word_diagonal_sweep(self):
+        self.assertEqual(Message.word_diagonal_sweep(15, "hello", 2, 2, 3),
+                         Message(15, [0, 90, 181, 90, 181, 271], [385, 250, 567, 567, 702]))
+
     def test_word_end_in_sync(self):
         self.assertEqual(Message.word_end_in_sync(15, "hello", [0, 0, 0, 0, 0]),
                          Message(15, [317, 452, 135, 135, 0], [385, 250, 567, 567, 702]))

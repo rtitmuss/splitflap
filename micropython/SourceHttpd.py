@@ -41,6 +41,8 @@ class SourceHttpd(Source):
             message = Message.word_random(rpm, word, 2)
         elif seq == "sweep":
             message = Message.word_sweep(rpm, word, 2)
+        elif seq == "diagonal_sweep":
+            message = Message.word_diagonal_sweep(rpm, word, 2)
         elif seq == "end_in_sync":
             message = Message.word_end_in_sync(rpm, word, motor_position)
         else:

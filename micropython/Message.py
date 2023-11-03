@@ -67,6 +67,15 @@ class Message:
         return Message(rpm, elements_delay, element_position)
 
     @classmethod
+    def word_diagonal_sweep(cls, rpm: int, word: str, sweep_offset: int, num_rows: int = 2, num_cols: int = 10):
+        element_position = list(map(_letter_position, word))
+        elements_delay = []
+        for i in range(num_rows):
+            for j in range(i, i + num_cols):
+                elements_delay.append(int(j * _STEPS_PER_LETTER * sweep_offset))
+        return Message(rpm, elements_delay, element_position)
+
+    @classmethod
     def word_random(cls, rpm: int, word: str, sweep_offset: int):
         element_position = list(map(_letter_position, word))
         random_delay = _fisher_yates_shuffle(list(range(len(element_position))))
