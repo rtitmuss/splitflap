@@ -1,53 +1,9 @@
-import select
-
-from micropython import const
-
-from Display import Display
 from typing import Union
 
-import socket
-
+from Display import Display
+from Httpd import Httpd, decode_url_encoded
 from Message import Message, LETTERS
 from Source import Source
-
-
-_RESPONSE_200 = const("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n")
-_RESPONSE_400 = const("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n\r\n")
-_RESPONSE_404 = const("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n")
-
-
-def decode_encoded_str(s: str) -> str:
-    i = 0
-    result = []
-    while i < len(s):
-        if s[i] == '+':
-            result.append(' ')
-            i += 1
-        elif s[i] == '%':
-            try:
-                hex_value = int(s[i + 1:i + 3], 16)
-                result.append(chr(hex_value))
-                i += 3
-            except ValueError:
-                result.append(s[i])
-                i += 1
-        else:
-            result.append(s[i])
-            i += 1
-    return ''.join(result)
-
-
-def decode_url_encoded(url_encoded: str) -> {str: str}:
-    data = {}
-    pairs = url_encoded.split('&')
-
-    for pair in pairs:
-        key_value = pair.split('=')
-        if len(key_value) == 2:
-            key, value = key_value
-            data[decode_encoded_str(key)] = decode_encoded_str(value)
-
-    return data
 
 
 class SourceHttpd(Source):
@@ -55,17 +11,19 @@ class SourceHttpd(Source):
         self.display = display
         self.queue = []
 
-        server_socket = socket.socket()
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.httpd = Httpd({
+            "POST /display": lambda request: self.process_post_display(request)
+        }, port)
 
-        if port:
-            server_socket.bind(('0.0.0.0', port))
+    def process_post_display(self, request: str) -> int:
+        body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
+        form_data = decode_url_encoded(body)
 
-        server_socket.listen(5)
-        self.server_socket = server_socket
+        if 'text' in form_data:
+            self.queue.append(form_data)
+            return 200, bytes()
 
-        self.poll = select.poll()
-        self.poll.register(server_socket, select.POLLIN)
+        return 400, bytes()
 
     def form_data_to_message(self, form_data: {str: str}, physical_motor_position: [int]):
         motor_position = self.display.physical_to_virtual(physical_motor_position)
@@ -90,43 +48,8 @@ class SourceHttpd(Source):
 
         return self.display.virtual_to_physical(message)
 
-    def process_http_request(self, request: str) -> str:
-        url = request.split()[1].decode('utf-8')
-
-        if request.startswith("POST /display"):
-            body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
-            form_data = decode_url_encoded(body)
-
-            if 'text' in form_data:
-                self.queue.append(form_data)
-                return _RESPONSE_200.encode('utf-8')
-
-        elif request.startswith("GET /"):
-            file_path = "www/index.html" if url == "/" else "www/" + url
-            try:
-                with open(file_path, "rb") as file:
-                    file_contents = file.read()
-                    return _RESPONSE_200.encode('utf-8') + file_contents
-            except OSError:
-                print('not found:', url)
-                return _RESPONSE_404.encode('utf-8')
-
-        return _RESPONSE_400.encode('utf-8')
-
     def load_message(self, is_stopped: bool, physical_motor_position: [int]) -> Union[Message, None]:
-        events = self.poll.poll(1000 if is_stopped else 0)
-
-        for socket, event in events:
-            if socket == self.server_socket:
-                client_socket, client_address = self.server_socket.accept()
-                self.poll.register(client_socket, select.POLLIN)
-            elif event & select.POLLIN:
-                request = socket.recv(1024)
-                if request:
-                    response = self.process_http_request(request)
-                    socket.send(response)
-                socket.close()
-                self.poll.unregister(socket)
+        self.httpd.poll(1000 if is_stopped else 0)
 
         if is_stopped and self.queue:
             form_data = self.queue.pop(0)
