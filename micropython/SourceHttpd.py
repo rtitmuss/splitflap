@@ -15,7 +15,8 @@ _RESPONSE_200 = const("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n")
 _RESPONSE_400 = const("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n\r\n")
 _RESPONSE_404 = const("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n")
 
-def decode_encoded_str(s):
+
+def decode_encoded_str(s: str) -> str:
     i = 0
     result = []
     while i < len(s):
@@ -36,7 +37,7 @@ def decode_encoded_str(s):
     return ''.join(result)
 
 
-def decode_url_encoded(url_encoded):
+def decode_url_encoded(url_encoded: str) -> {str: str}:
     data = {}
     pairs = url_encoded.split('&')
 
@@ -66,28 +67,39 @@ class SourceHttpd(Source):
         self.poll = select.poll()
         self.poll.register(server_socket, select.POLLIN)
 
-    def process_post_display(self, request: str):
-        body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
-        form_data = decode_url_encoded(body)
+    def form_data_to_message(self, form_data: {str: str}, physical_motor_position: [int]):
+        motor_position = self.display.physical_to_virtual(physical_motor_position)
 
-        if 'text' in form_data:
-            form_word = form_data['text']
-            clean_word = ''.join(char for char in form_word.upper() if char in LETTERS)
-            word = self.display.adjust_word(clean_word)
+        form_word = form_data['text']
+        clean_word = ''.join(char for char in form_word.upper() if char in LETTERS)
+        word = self.display.adjust_word(clean_word)
 
-            rpm = int(form_data.get('rpm', 15))
+        rpm = int(form_data.get('rpm', 15))
+        seq = form_data.get('seq', None)
 
-            print('word: \'{}\' rpm: {}'.format(word, rpm))
+        print('word: \'{}\' rpm: {}'.format(word, rpm))
+
+        if seq == "random":
+            message = Message.word_random(rpm, word, 2)
+        elif seq == "sweep":
+            message = Message.word_start_sweep(rpm, word, 2)
+        elif seq == "end_in_sync":
+            message = Message.word_end_in_sync(rpm, word, motor_position)
+        else:
             message = Message.word_start_in_sync(rpm, word)
 
-            self.queue.append(self.display.virtual_to_physical(message))
+        return self.display.virtual_to_physical(message)
 
     def process_http_request(self, request: str) -> str:
         url = request.split()[1].decode('utf-8')
 
         if request.startswith("POST /display"):
-            self.process_post_display(request)
-            return _RESPONSE_200.encode('utf-8')
+            body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
+            form_data = decode_url_encoded(body)
+
+            if 'text' in form_data:
+                self.queue.append(form_data)
+                return _RESPONSE_200.encode('utf-8')
 
         elif request.startswith("GET /"):
             file_path = "www/index.html" if url == "/" else "www/" + url
@@ -117,4 +129,5 @@ class SourceHttpd(Source):
                 self.poll.unregister(socket)
 
         if is_stopped and self.queue:
-            return self.queue.pop(0)
+            form_data = self.queue.pop(0)
+            return self.form_data_to_message(form_data, physical_motor_position)

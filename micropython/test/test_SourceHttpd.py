@@ -9,6 +9,9 @@ class MockDisplay:
     def virtual_to_physical(self, element_position):
         return element_position
 
+    def physical_to_virtual(self, element_position):
+        return element_position
+
 
 class SourceHttpdTest(unittest.TestCase):
     def setUp(self):
@@ -40,8 +43,14 @@ class SourceHttpdTest(unittest.TestCase):
                          {'name': 'Smith'})
 
     def test_process_http_request_post_display(self):
-        response = self.source_httpd.process_http_request('POST /display\r\n\r\n'.encode('utf-8'))
+        response = self.source_httpd.process_http_request('POST /display\r\n\r\ntext=foo'.encode('utf-8'))
         self.assertTrue(response.startswith("HTTP/1.1 200"))
+        self.assertEqual(self.source_httpd.queue[0], {"text": "foo"})
+
+    def test_process_http_request_post_display_bad_request(self):
+        response = self.source_httpd.process_http_request('POST /display\r\n\r\n'.encode('utf-8'))
+        self.assertTrue(response.startswith("HTTP/1.1 400"))
+        self.assertFalse(self.source_httpd.queue)
 
     def test_process_http_request_get_index_html(self):
         response = self.source_httpd.process_http_request('GET /\r\n\r\n'.encode('utf-8'))
@@ -55,14 +64,13 @@ class SourceHttpdTest(unittest.TestCase):
         response = self.source_httpd.process_http_request('PUT /\r\n\r\n'.encode('utf-8'))
         self.assertTrue(response.startswith("HTTP/1.1 400"))
 
-    def test_process_post_display(self):
-        self.source_httpd.process_http_request('POST /display\r\n\r\ntext=foo'.encode('utf-8'))
-        print(self.source_httpd.queue[0])
-        self.assertEqual(self.source_httpd.queue[0], Message(15, [0, 0, 0], [295, 702, 702]))
+    def test_form_data_to_message(self):
+        message = self.source_httpd.form_data_to_message({"text": "foo"}, [])
+        self.assertEqual(message, Message(15, [0, 0, 0], [295, 702, 702]))
 
-    def test_process_post_display_with_rpm(self):
-        self.source_httpd.process_http_request('POST /display\r\n\r\ntext=foo&rpm=10'.encode('utf-8'))
-        self.assertEqual(self.source_httpd.queue[0], Message(10, [0, 0, 0], [295, 702, 702]))
+    def test_form_data_to_message_with_rpm(self):
+        message = self.source_httpd.form_data_to_message({"text": "foo", "rpm": "10"}, [])
+        self.assertEqual(message, Message(10, [0, 0, 0], [295, 702, 702]))
 
 
 if __name__ == '__main__':
