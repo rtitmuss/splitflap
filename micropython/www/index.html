@@ -2,15 +2,41 @@
 <html>
 <head>
     <title>Split Flap</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            text-align: center;
+        }
+        #title {
+            font-family: 'expressway', sans-serif;
+            font-style: normal;
+            font-weight: 200;
+            font-size: 48px;
+
+            background-color: black;
+            color: white;
+
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+        #form {
+            background-color: #EDEDED;
+            margin: 40px 0;
+            padding: 10px 0;
+        }
+        #text_input {
+            width: 300px;
+        }
+    </style>
     <script>
         const randomWords = [
-            "apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon",
+            "Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape", "Honeydew", "Kiwi", "Lemon",
             "Hello", "World", "Spirit", "Purple", "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
             "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital", "Orbit", "Pepper",
             "7849501273", "2398756104", "5476928310", "1062547983", "3987165420",
             "abcdefghijklmnopqrst", "defghijklmnopqrstuvw", "ghijklmnopqrstuvwxyz",
-            "A".repeat(20), "B".repeat(20), "Y".repeat(20), "Z".repeat(20),
-            "$".repeat(20), "&".repeat(20), "$#".repeat(10) + "#$".repeat(10),
+            "a".repeat(20), "b".repeat(20), "y".repeat(20), "z".repeat(20),
+            "$".repeat(20), "&".repeat(20), "$#".repeat(5) + "#$".repeat(5),
         ];
 
         function shuffleArray(array) {
@@ -20,14 +46,37 @@
             }
         }
 
-        function submitForm() {
-            fetch(form.action, {
-                method: "post",
-                body: new URLSearchParams(new FormData(form)) // application/x-www-form-urlencoded
-            });
+        async function fetchWithTimeout(resource, options) {
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 2000);
+
+          const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal
+          });
+          clearTimeout(id);
+          return response;
         }
 
-        function fillWithRandomWords() {
+        async function submitForm() {
+            try {
+                response = await fetchWithTimeout(form.action, {
+                    method: "post",
+                    body: new URLSearchParams(new FormData(form)) // application/x-www-form-urlencoded
+                });
+                if (response.ok) {
+                    errorMessage.style.display = "none";
+                } else {
+                    console.log('error', response)
+                    errorMessage.style.display = "block";
+                }
+            } catch (error) {
+                console.log('error', error)
+                errorMessage.style.display = "block";
+            }
+        }
+
+        async function fillWithRandomWords() {
             const textInput = document.getElementById("text_input");
             shuffleArray(randomWords);
 
@@ -38,12 +87,11 @@
                 if (words_len + word.length <= 20) {
                     words.push(word);
                     words_len += word.length + 1;
-                } else {
+                }
+                if (words_len >= 20) {
                     break;
                 }
             }
-
-            console.log(randomWords)
 
             textInput.value = words.join(' ');
             submitForm();
@@ -51,26 +99,29 @@
     </script>
 </head>
 <body>
-    <h1>Split Flap</h1>
-    <form method="post" action="/display">
-        <label for="rpm">Select RPM (5-15):</label>
-        <input type="number" id="rpm" name="rpm" min="5" max="15" value="15" required>
+    <p><span id="title">&nbsp;SPLIT FLAP&nbsp;</span></p>
+    <form id="form" method="post" action="/display">
+        <label for="text_input">Enter up to 20 letters!</label>
         <br>
-        <label for="text_input">Enter up to 20 characters:</label>
         <input type="text" id="text_input" name="text" maxlength="20">
         <br>
-        <input type="submit" value="Submit">
+        <select id="rpm" name="rpm" required>
+            <option value="5">5 rpm</option>
+            <option value="6">6 rpm</option>
+            <option value="7">7 rpm</option>
+            <option value="8">8 rpm</option>
+            <option value="9">9 rpm</option>
+            <option value="10" selected>10 rpm</option>
+            <option value="11">11 rpm</option>
+            <option value="12">12 rpm</option>
+            <option value="13">13 rpm</option>
+            <option value="14">14 rpm</option>
+            <option value="15">15 rpm</option>
+        </select>
+        <button type="button" onclick="submitForm()">Submit</button>
         <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
     </form>
-
-    <script>
-        let form = document.querySelector("form");
-
-        form.addEventListener("submit", function(event){
-            event.preventDefault();
-            submitForm();
-        });
-    </script>
+    <p id="errorMessage" style="color: red; display: none;">Error. Please try again.</p>
 </body>
 
 </html>
