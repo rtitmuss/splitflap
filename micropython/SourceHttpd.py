@@ -1,5 +1,7 @@
+import random
 import time
 
+import StepperMotor
 from typing import Union
 
 from Display import Display
@@ -33,6 +35,8 @@ class SourceHttpd(Source):
         motor_position = self.display.physical_to_virtual(physical_motor_position)
 
         form_word = form_data['text'].upper()
+        rpm = int(form_data.get('rpm', 15))
+        seq = form_data.get('seq', None)
 
         interval_ms = None
         if form_word == "{CLOCK}":
@@ -40,11 +44,32 @@ class SourceHttpd(Source):
             form_word = "     {:02d}:{:02d}{:02d}.{:02d}.{:04d}".format(hour, minute, mday, month, year)
             interval_ms = (60 - second) * 1000
 
+        if form_word == "{ART}":
+            display_len = self.display.display_length()
+            pattern = []
+            for i in range(display_len):
+                pattern.append(random.choice(' $&#'))
+
+            pattern[random.randint(0, display_len-1)] = 'X'
+            pattern[random.randint(0, display_len-1)] = 'O'
+            pattern[random.randint(0, display_len-1)] = '-'
+
+            form_word = ''.join(pattern)
+            interval_ms = 5 * 60 * 1000
+
+        if form_word == "{MOTION}":
+            display_len = self.display.display_length()
+
+            random_element = random.randint(0, display_len-1)
+            motor_position[random_element] = StepperMotor.stepper_add(
+                motor_position[random_element],
+                random.randint(int(StepperMotor.STEPS_PER_REVOLUTION / 4), int(StepperMotor.STEPS_PER_REVOLUTION / 2))
+            )
+
+            return self.display.virtual_to_physical(Message(rpm, [0] * display_len, motor_position)), 1
+
         clean_word = ''.join(char for char in form_word if char in LETTERS)
         word = self.display.adjust_word(clean_word)
-
-        rpm = int(form_data.get('rpm', 15))
-        seq = form_data.get('seq', None)
 
         print('word: \'{}\' rpm: {}'.format(word, rpm))
 

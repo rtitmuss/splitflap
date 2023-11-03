@@ -97,9 +97,11 @@
             submitForm();
         }
 
-        async function preset(text_preset) {
+        async function preset(text_preset, seq_preset) {
             const textInput = document.getElementById("text_input");
+            const seqInput = document.getElementById("seq_input");
             textInput.value = text_preset;
+            seqInput.value = seq_preset;
             submitForm();
         }
     </script>
@@ -111,14 +113,14 @@
         <br>
         <input type="text" id="text_input" name="text" maxlength="20">
         <br>
-        <select id="seq" name="seq" required>
+        <select id="seq_input" name="seq" required>
             <option value="start_in_sync">|&gt;</option>
             <option value="end_in_sync">&gt;|</option>
             <option value="sweep">&gt;&gt;</option>
             <option value="diagonal_sweep">&gt;v</option>
             <option value="random">##</option>
         </select>
-        <select id="rpm" name="rpm" required>
+        <select id="rpm_input" name="rpm" required>
             <option value="5">5 rpm</option>
             <option value="6">6 rpm</option>
             <option value="7">7 rpm</option>
@@ -136,7 +138,9 @@
     </form>
     <p id="errorMessage" style="color: red; display: none;">Error. Please try again.</p>
     <p>
-        <a href="#" onclick="preset('{clock}')">Clock</a><br/>
+        <a href="#" onclick="preset('{clock}', 'start_in_sync')">Clock</a><br/>
+        <a href="#" onclick="preset('{art}', 'end_in_sync')">Art</a><br/>
+        <a href="#" onclick="preset('{motion}', 'start_in_sync')">Motion</a><br/>
     </p>
 </body>
 
