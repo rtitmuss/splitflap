@@ -66,7 +66,7 @@ class SourceWords(Source):
         elif c == 1:
             message = Message.word_end_in_sync(_RPM, word, motor_position)
         elif c == 2:
-            message = Message.word_start_sweep(_RPM, word, 2)
+            message = Message.word_sweep(_RPM, word, 2)
         else:
             message = Message.word_random(_RPM, word, 2)
 

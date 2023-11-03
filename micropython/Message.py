@@ -61,7 +61,7 @@ class Message:
         return Message(rpm, [0] * len(element_position), element_position)
 
     @classmethod
-    def word_start_sweep(cls, rpm: int, word: str, sweep_offset: int):
+    def word_sweep(cls, rpm: int, word: str, sweep_offset: int):
         element_position = list(map(_letter_position, word))
         elements_delay = [int(i * _STEPS_PER_LETTER * sweep_offset) for i in range(len(element_position))]
         return Message(rpm, elements_delay, element_position)
