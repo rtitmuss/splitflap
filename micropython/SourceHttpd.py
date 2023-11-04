@@ -20,7 +20,8 @@ class SourceHttpd(Source):
         self.scheduled_time = None
 
         self.providers = {
-            "{CLOCK}": ProviderClock(),
+            "{CLOCK_STO}": ProviderClock("STO  %H:%M%d.%m.%Y", "Europe/Stockholm"),
+            "{CLOCK_ADL}": ProviderClock("ADL  %H:%M%d.%m.%Y", "Australia/Adelaide"),
             "{ART}": ProviderArt(),
             "{MOTION}": ProviderMotion(),
         }
