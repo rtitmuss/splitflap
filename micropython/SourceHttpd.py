@@ -1,8 +1,10 @@
-import random
 import time
 
-import StepperMotor
+from ProviderMotion import ProviderMotion
 from typing import Union
+
+from ProviderArt import ProviderArt
+from ProviderClock import ProviderClock
 
 from Display import Display
 from Httpd import Httpd, decode_url_encoded
@@ -16,6 +18,12 @@ class SourceHttpd(Source):
         self.display_queue = []
         self.display_data = None
         self.scheduled_time = None
+
+        self.providers = {
+            "{CLOCK}": ProviderClock(),
+            "{ART}": ProviderArt(),
+            "{MOTION}": ProviderMotion(),
+        }
 
         self.httpd = Httpd({
             "POST /display": lambda request: self.process_post_display(request)
@@ -31,64 +39,41 @@ class SourceHttpd(Source):
 
         return 400, bytes()
 
-    def display_data_to_message(self, form_data: {str: str}, physical_motor_position: [int]):
+    def display_data_to_message(self, display_data: {str: str}, physical_motor_position: [int]):
         motor_position = self.display.physical_to_virtual(physical_motor_position)
 
-        form_word = form_data['text'].upper()
-        rpm = int(form_data.get('rpm', 15))
-        seq = form_data.get('seq', None)
+        display_word = display_data['text'].upper()
+        rpm = int(display_data.get('rpm', 15))
+        seq = display_data.get('seq', None)
 
-        interval_ms = None
-        if form_word == "{CLOCK}":
-            (year, month, mday, hour, minute, second) = time.localtime()[:6]
-            form_word = "     {:02d}:{:02d}{:02d}.{:02d}.{:04d}".format(hour, minute, mday, month, year)
-            interval_ms = (60 - second) * 1000
-
-        if form_word == "{ART}":
-            display_len = self.display.display_length()
-            pattern = []
-            for i in range(display_len):
-                pattern.append(random.choice(' $&#'))
-
-            pattern[random.randint(0, display_len-1)] = 'X'
-            pattern[random.randint(0, display_len-1)] = 'O'
-            pattern[random.randint(0, display_len-1)] = '-'
-
-            form_word = ''.join(pattern)
-            interval_ms = 5 * 60 * 1000
-
-        if form_word == "{MOTION}":
-            display_len = self.display.display_length()
-
-            random_element = random.randint(0, display_len-1)
-            motor_position[random_element] = StepperMotor.stepper_add(
-                motor_position[random_element],
-                random.randint(int(StepperMotor.STEPS_PER_REVOLUTION / 4), int(StepperMotor.STEPS_PER_REVOLUTION / 2))
-            )
-
-            return self.display.virtual_to_physical(Message(rpm, [0] * display_len, motor_position)), 1
-
-        clean_word = ''.join(char for char in form_word if char in LETTERS)
-        word = self.display.adjust_word(clean_word)
-
-        print('word: \'{}\' rpm: {}'.format(word, rpm))
-
-        if seq == "random":
-            message = Message.word_random(rpm, word, 2)
-        elif seq == "sweep":
-            message = Message.word_sweep(rpm, word, 2)
-        elif seq == "diagonal_sweep":
-            message = Message.word_diagonal_sweep(rpm, word, 2)
-        elif seq == "end_in_sync":
-            message = Message.word_end_in_sync(rpm, word, motor_position)
+        provider = self.providers.get(display_word)
+        if provider:
+            word_or_message, interval_ms = provider.get_word_or_message(display_word, rpm, self.display, motor_position)
         else:
-            message = Message.word_start_in_sync(rpm, word)
+            # filter characters using LETTERS
+            word_or_message = ''.join(char for char in display_word if char in LETTERS)
+            interval_ms = None
+
+        if isinstance(word_or_message, str):
+            word = self.display.adjust_word(word_or_message)
+            print('word: \'{}\' rpm: {}'.format(word, rpm))
+
+            if seq == "random":
+                message = Message.word_random(rpm, word, 2)
+            elif seq == "sweep":
+                message = Message.word_sweep(rpm, word, 2)
+            elif seq == "diagonal_sweep":
+                message = Message.word_diagonal_sweep(rpm, word, 2)
+            elif seq == "end_in_sync":
+                message = Message.word_end_in_sync(rpm, word, motor_position)
+            else:
+                message = Message.word_start_in_sync(rpm, word)
+        else:
+            message = word_or_message
 
         return self.display.virtual_to_physical(message), interval_ms
 
     def load_message(self, is_stopped: bool, physical_motor_position: [int]) -> Union[Message, None]:
-        self.httpd.poll(1000 if is_stopped else 0)
-
         if is_stopped:
             if self.display_queue:
                 self.display_data = self.display_queue.pop(0)
@@ -98,3 +83,5 @@ class SourceHttpd(Source):
                 message, interval_ms = self.display_data_to_message(self.display_data, physical_motor_position)
                 self.scheduled_time = time.ticks_add(time.ticks_ms(), interval_ms) if interval_ms else None
                 return message
+
+        self.httpd.poll(1000 if is_stopped else 0)
