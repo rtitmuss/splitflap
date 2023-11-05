@@ -133,8 +133,9 @@ if is_picow:
     downstream_machine_reset()
     time.sleep_ms(1000)
 
+    display = Display(Config.display_order, Config.display_offsets)
     # board_source = SourceWords(Config.test_words, Display(Config.display_order, Config.display_offsets))
-    board_source = SourceHttpd(Display(Config.display_order, Config.display_offsets), 80)
+    board_source = SourceHttpd(display, Config.providers, 80)
 else:
     board_source = SourceUart(uart_upstream)
 

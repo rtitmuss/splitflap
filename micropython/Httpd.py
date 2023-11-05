@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from typing import Callable
 
 from micropython import const
@@ -59,7 +61,7 @@ def _process_http_get(request: str) -> int:
 
 class Httpd():
     def __init__(self, handlers: {str: Callable}, port: int = 0):
-        self.handlers = handlers.copy()
+        self.handlers = OrderedDict(handlers)
         self.handlers["GET /"] = _process_http_get
 
         server_socket = socket.socket()

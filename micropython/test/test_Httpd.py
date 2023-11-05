@@ -8,10 +8,13 @@ def raise_error():
 
 class SourceHttpdTest(unittest.TestCase):
     def setUp(self):
-        self.display_post_called = 1
+        self.get_data_called = False
+        self.display_post_called = False
+
         self.httpd = Httpd({
+            "GET /data": lambda request: setattr(self, "get_data_called", True) or (200, b'data'),
             "POST /display": lambda request: setattr(self, "display_post_called", True) or (200, b''),
-            "POST /error": lambda request: raise_error()
+            "POST /error": lambda request: raise_error(),
         })
 
     def test_decode_url_encoded_basic_pairs(self):
@@ -46,6 +49,11 @@ class SourceHttpdTest(unittest.TestCase):
     def test_process_http_request_get_index_html(self):
         response = self.httpd.process_http_request('GET /\r\n\r\n'.encode('utf-8'))
         self.assertTrue(response.startswith("HTTP/1.1 200"))
+
+    def test_process_http_request_get_data(self):
+        response = self.httpd.process_http_request('GET /data\r\n\r\n'.encode('utf-8'))
+        self.assertTrue(response.startswith("HTTP/1.1 200"))
+        self.assertTrue(response.endswith("data"))
 
     def test_process_http_request_bad_request(self):
         response = self.httpd.process_http_request('PUT /\r\n\r\n'.encode('utf-8'))

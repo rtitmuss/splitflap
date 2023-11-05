@@ -1,11 +1,9 @@
+import json
 import time
 
-from ProviderMotion import ProviderMotion
-from typing import Union
+from typing import Union, Tuple, List, Dict
 
-from ProviderArt import ProviderArt
-from ProviderClock import ProviderClock
-
+from Provider import Provider
 from Display import Display
 from Httpd import Httpd, decode_url_encoded
 from Message import Message, LETTERS
@@ -13,24 +11,19 @@ from Source import Source
 
 
 class SourceHttpd(Source):
-    def __init__(self, display: Display, port: int = 0):
+    def __init__(self, display: Display, providers: Dict[str, Provider], port: int = 0):
         self.display = display
+        self.providers = providers
         self.display_queue = []
         self.display_data = None
         self.scheduled_time = None
 
-        self.providers = {
-            "{CLOCK_STO}": ProviderClock("STO  %H:%M%d.%m.%Y", "Europe/Stockholm"),
-            "{CLOCK_ADL}": ProviderClock("ADL  %H:%M%d.%m.%Y", "Australia/Adelaide"),
-            "{ART}": ProviderArt(),
-            "{MOTION}": ProviderMotion(),
-        }
-
         self.httpd = Httpd({
-            "POST /display": lambda request: self.process_post_display(request)
+            "POST /display": lambda request: self.process_post_display(request),
+            "GET /presets": lambda request: self.process_get_presets(request),
         }, port)
 
-    def process_post_display(self, request: str) -> int:
+    def process_post_display(self, request: str) -> Tuple[int, bytes]:
         body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
         form_data = decode_url_encoded(body)
 
@@ -38,14 +31,17 @@ class SourceHttpd(Source):
             self.display_queue.append(form_data)
             return 200, bytes()
 
-        return 400, bytes()
+        return 400, b''
+
+    def process_get_presets(self, request: str) -> Tuple[int, bytes]:
+        return 200, json.dumps(self.presets).encode('utf-8')
 
     def display_data_to_message(self, display_data: {str: str}, physical_motor_position: [int]):
         motor_position = self.display.physical_to_virtual(physical_motor_position)
 
         display_word = display_data['text'].upper()
         rpm = int(display_data.get('rpm', 15))
-        seq = display_data.get('seq', None)
+        order = display_data.get('order', None)
 
         provider = self.providers.get(display_word)
         if provider:
@@ -59,13 +55,13 @@ class SourceHttpd(Source):
             word = self.display.adjust_word(word_or_message)
             print('word: \'{}\' rpm: {}'.format(word, rpm))
 
-            if seq == "random":
+            if order == "random":
                 message = Message.word_random(rpm, word, 2)
-            elif seq == "sweep":
+            elif order == "sweep":
                 message = Message.word_sweep(rpm, word, 2)
-            elif seq == "diagonal_sweep":
+            elif order == "diagonal_sweep":
                 message = Message.word_diagonal_sweep(rpm, word, 2)
-            elif seq == "end_in_sync":
+            elif order == "end_in_sync":
                 message = Message.word_end_in_sync(rpm, word, motor_position)
             else:
                 message = Message.word_start_in_sync(rpm, word)

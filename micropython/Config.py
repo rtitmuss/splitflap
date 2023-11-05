@@ -1,10 +1,22 @@
 # element order when displaying alphabet
 # display_order = 'abcdefghijklmnopqrst'
+from ProviderArt import ProviderArt
+from ProviderClock import ProviderClock
+from ProviderMotion import ProviderMotion
+
 display_order = 'rqnmjifebatspolkhgdc'
 
 # flap offsets in display order from calibration
 display_offsets = [0, 0, 0, 0, 5, 22, 11, 0, 0, 0,
                    0, 0, 0, 0, 32, 0, 0, 0, 0, 0]
+
+providers = {
+    "{CLOCK_STO}": ProviderClock("STO  %H:%M%d.%m.%Y", "Europe/Stockholm"),
+    "{CLOCK_ADL}": ProviderClock("ADL  %H:%M%d.%m.%Y", "Australia/Adelaide"),
+    "{CLOCK_NYC}": ProviderClock("NYC  %H:%M%d.%m.%Y", "America/New_York"),
+    "{ART}": ProviderArt(),
+    "{MOTION}": ProviderMotion(),
+}
 
 _alphabet = 'abcdefghijklmnopqrstuvwxyz'
 _display_len = len(display_order)

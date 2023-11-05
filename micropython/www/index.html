@@ -97,11 +97,11 @@
             submitForm();
         }
 
-        async function preset(text_preset, seq_preset) {
+        async function preset(text_preset, order_preset) {
             const textInput = document.getElementById("text_input");
-            const seqInput = document.getElementById("seq_input");
+            const orderInput = document.getElementById("order_input");
             textInput.value = text_preset;
-            seqInput.value = seq_preset;
+            orderInput.value = order_preset;
             submitForm();
         }
     </script>
@@ -113,7 +113,7 @@
         <br>
         <input type="text" id="text_input" name="text" maxlength="20">
         <br>
-        <select id="seq_input" name="seq" required>
+        <select id="order_input" name="order" required>
             <option value="start_in_sync">|&gt;</option>
             <option value="end_in_sync">&gt;|</option>
             <option value="sweep">&gt;&gt;</option>
@@ -137,12 +137,16 @@
         <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
     </form>
     <p id="errorMessage" style="color: red; display: none;">Error. Please try again.</p>
-    <p>
-        <a href="#" onclick="preset('{clock_sto}', 'start_in_sync')">Clock (Stockholm)</a><br/>
-        <a href="#" onclick="preset('{clock_adl}', 'start_in_sync')">Clock (Adelaide)</a><br/>
-        <a href="#" onclick="preset('{art}', 'end_in_sync')">Art</a><br/>
-        <a href="#" onclick="preset('{motion}', 'start_in_sync')">Motion</a><br/>
-    </p>
+    <div id="preset-container">
+        Clock
+        <a href="#" onclick="preset('{clock_sto}', 'start_in_sync')">STO</a>
+        <a href="#" onclick="preset('{clock_adl}', 'start_in_sync')">ADL</a>
+        <a href="#" onclick="preset('{clock_nyc}', 'start_in_sync')">NYC</a>
+        <br/>
+        <a href="#" onclick="preset('{art}', 'end_in_sync')">Art</a>
+        <br/>
+        <a href="#" onclick="preset('{motion}', 'start_in_sync')">Motion</a>
+    </div>
 </body>
 
 </html>
