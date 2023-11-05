@@ -7,8 +7,7 @@ from typing import Union, Tuple
 
 
 class ProviderArt(Provider):
-    def get_word_or_message(self, word: str, rpm: int, display: Display, motor_position: [int]) \
-            -> Union[Tuple[str, int], Tuple[Message, int]]:
+    def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
         display_len = display.display_length()
         pattern = []
         for i in range(display_len):

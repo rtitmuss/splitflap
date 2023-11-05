@@ -2,12 +2,12 @@ import json
 import time
 
 from Wifi import Wifi
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, Dict
 
 from Provider import Provider
 from Display import Display
 from Httpd import Httpd, decode_url_encoded
-from Message import Message, LETTERS
+from Message import Message
 from Source import Source
 
 
@@ -19,6 +19,8 @@ class SourceHttpd(Source):
         self.display_queue = []
         self.display_data = None
         self.scheduled_time = None
+
+        self.default_provider = Provider()
 
         self.httpd = Httpd({
             "POST /display": lambda request: self.process_post_display(request),
@@ -35,40 +37,13 @@ class SourceHttpd(Source):
 
         return 400, b''
 
-    def process_get_presets(self, request: str) -> Tuple[int, bytes]:
-        return 200, json.dumps(self.presets).encode('utf-8')
-
     def display_data_to_message(self, display_data: {str: str}, physical_motor_position: [int]):
         motor_position = self.display.physical_to_virtual(physical_motor_position)
 
         display_word = display_data['text'].upper()
-        rpm = int(display_data.get('rpm', 15))
-        order = display_data.get('order', None)
 
-        provider = self.providers.get(display_word)
-        if provider:
-            word_or_message, interval_ms = provider.get_word_or_message(display_word, rpm, self.display, motor_position)
-        else:
-            # filter characters using LETTERS
-            word_or_message = ''.join(char for char in display_word if char in LETTERS)
-            interval_ms = None
-
-        if isinstance(word_or_message, str):
-            word = self.display.adjust_word(word_or_message)
-            print('word: \'{}\' rpm: {}'.format(word, rpm))
-
-            if order == "random":
-                message = Message.word_random(rpm, word, 2)
-            elif order == "sweep":
-                message = Message.word_sweep(rpm, word, 2)
-            elif order == "diagonal_sweep":
-                message = Message.word_diagonal_sweep(rpm, word, 2)
-            elif order == "end_in_sync":
-                message = Message.word_end_in_sync(rpm, word, motor_position)
-            else:
-                message = Message.word_start_in_sync(rpm, word)
-        else:
-            message = word_or_message
+        provider = self.providers.get(display_word, self.default_provider)
+        message, interval_ms = provider.get_message(display_word, display_data, self.display, motor_position)
 
         return self.display.virtual_to_physical(message), interval_ms
 

@@ -13,8 +13,8 @@ class PythonArtTest(unittest.TestCase):
         self.display = DisplayMock()
         self.provider = ProviderArt()
 
-    def test_get_work_or_message(self):
-        word_or_message, interval_ms = self.provider.get_word_or_message(None, None, self.display, None)
+    def test_get_word(self):
+        word_or_message, interval_ms = self.provider.get_word(None, self.display)
         self.assertIsInstance(word_or_message, str)
         self.assertEqual(interval_ms, 300000)
 

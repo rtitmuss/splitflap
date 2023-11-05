@@ -14,9 +14,9 @@ class PythonArtTest(unittest.TestCase):
         self.display = DisplayMock()
         self.provider = ProviderMotion()
 
-    def test_get_work_or_message(self):
-        word_or_message, interval_ms = self.provider.get_word_or_message(None, 15, self.display, [0, 0, 0, 0])
-        self.assertIsInstance(word_or_message, Message)
+    def test_get_message(self):
+        message, interval_ms = self.provider.get_message(None, {"rpm":"15"}, self.display, [0, 0, 0, 0])
+        self.assertIsInstance(message, Message)
         self.assertEqual(interval_ms, 1)
 
 
