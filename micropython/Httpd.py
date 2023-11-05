@@ -1,17 +1,23 @@
 from collections import OrderedDict
 
-from typing import Callable
+from typing import Callable, Tuple
 
 from micropython import const
 import select
 import socket
 
 
-_RESPONSE_200 = const("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n")
+_RESPONSE_200 = const("HTTP/1.1 200 OK\r\nContent-Type: {}\r\n\r\n")
 _RESPONSE_400 = const("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n\r\n")
 _RESPONSE_404 = const("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n")
 _RESPONSE_500 = const("HTTP/1.1 500 Server Error\r\nContent-Type: text/html\r\n\r\n")
 
+_CONTENT_TYPE = {
+    ".css": "text/css",
+    ".js": "application/javascript",
+    ".json": "application/json",
+    ".ico": "image/vnd.microsoft.icon",
+}
 
 def decode_encoded_str(s: str) -> str:
     i = 0
@@ -47,16 +53,19 @@ def decode_url_encoded(url_encoded: str) -> {str: str}:
     return data
 
 
-def _process_http_get(request: str) -> int:
+def _process_http_get(request: str) -> Tuple[int, bytes, str]:
     url = request.split()[1].decode('utf-8')
+
+    url_extension = url[url.rfind("."):]
+    content_type = _CONTENT_TYPE.get(url_extension, "text/html")
 
     file_path = "www/index.html" if url == "/" else "www/" + url
     try:
         with open(file_path, "rb") as file:
-            return 200, file.read()
+            return 200, file.read(), content_type
     except OSError:
         print('not found:', url)
-        return 404, b''
+        return 404, b'', ''
 
 
 class Httpd():
@@ -80,10 +89,10 @@ class Httpd():
         for url_prefix, handler in self.handlers.items():
             if request.startswith(url_prefix):
                 try:
-                    status, body = handler(request)
+                    status, body, content_type = handler(request)
 
                     if status == 200:
-                        return _RESPONSE_200.encode('utf-8') + body
+                        return _RESPONSE_200.format(content_type or "text/html").encode('utf-8') + body
                     elif status == 404:
                         return _RESPONSE_404.encode('utf-8')
                     else:
@@ -105,6 +114,11 @@ class Httpd():
                 request = socket.recv(1024)
                 if request:
                     response = self.process_http_request(request)
-                    socket.send(response)
+
+                    response_view = memoryview(response)
+                    while response_view:
+                        sent = socket.send(response_view)
+                        response_view = response_view[sent:]
+
                 socket.close()
                 self.select_poll.unregister(socket)

@@ -27,15 +27,15 @@ class SourceHttpd(Source):
             "GET /presets": lambda request: self.process_get_presets(request),
         }, port)
 
-    def process_post_display(self, request: str) -> Tuple[int, bytes]:
+    def process_post_display(self, request: str) -> Tuple[int, bytes, str]:
         body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
         form_data = decode_url_encoded(body)
 
         if 'text' in form_data:
             self.display_queue.append(form_data)
-            return 200, bytes()
+            return 200, b'', 'text/html'
 
-        return 400, b''
+        return 400, b'', 'text/html'
 
     def display_data_to_message(self, display_data: {str: str}, physical_motor_position: [int]):
         motor_position = self.display.physical_to_virtual(physical_motor_position)

@@ -12,8 +12,8 @@ class SourceHttpdTest(unittest.TestCase):
         self.display_post_called = False
 
         self.httpd = Httpd({
-            "GET /data": lambda request: setattr(self, "get_data_called", True) or (200, b'data'),
-            "POST /display": lambda request: setattr(self, "display_post_called", True) or (200, b''),
+            "GET /data": lambda request: setattr(self, "get_data_called", True) or (200, b'data', 'text/html'),
+            "POST /display": lambda request: setattr(self, "display_post_called", True) or (200, b'', 'text/html'),
             "POST /error": lambda request: raise_error(),
         })
 
@@ -42,16 +42,22 @@ class SourceHttpdTest(unittest.TestCase):
                          {'name': 'Smith'})
 
     def test_process_http_request_post_display(self):
-        response = self.httpd.process_http_request('POST /display\r\n\r\ntext=foo'.encode('utf-8'))
+        response = self.httpd.process_http_request('POST /display HTTP/1.1\r\n\r\ntext=foo'.encode('utf-8'))
         self.assertTrue(response.startswith("HTTP/1.1 200"))
         self.assertTrue(self.display_post_called)
 
     def test_process_http_request_get_index_html(self):
-        response = self.httpd.process_http_request('GET /\r\n\r\n'.encode('utf-8'))
+        response = self.httpd.process_http_request('GET / HTTP/1.1\r\n\r\n'.encode('utf-8'))
         self.assertTrue(response.startswith("HTTP/1.1 200"))
+        self.assertTrue("text/html".encode('utf-8') in response)
+
+    def test_process_http_request_get_favicon_ico(self):
+        response = self.httpd.process_http_request('GET /favicon.ico HTTP/1.1\r\n\r\n'.encode('utf-8'))
+        self.assertTrue(response.startswith("HTTP/1.1 200"))
+        self.assertTrue("image/vnd.microsoft.icon".encode('utf-8') in response)
 
     def test_process_http_request_get_data(self):
-        response = self.httpd.process_http_request('GET /data\r\n\r\n'.encode('utf-8'))
+        response = self.httpd.process_http_request('GET /data HTTP/1.1\r\n\r\n'.encode('utf-8'))
         self.assertTrue(response.startswith("HTTP/1.1 200"))
         self.assertTrue(response.endswith("data"))
 

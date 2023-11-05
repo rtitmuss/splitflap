@@ -42,12 +42,12 @@ class SourceHttpdTest(unittest.TestCase):
 
     def test_process_post_display(self):
         status = self.source_httpd.process_post_display('POST /display\r\n\r\ntext=foo'.encode('utf-8'))
-        self.assertEqual(status, (200, b''))
+        self.assertEqual(status, (200, b'', 'text/html'))
         self.assertEqual(self.source_httpd.display_queue[0], {"text": "foo"})
 
     def test_process_post_display_bad_request(self):
         status = self.source_httpd.process_post_display('POST /display\r\n\r\n'.encode('utf-8'))
-        self.assertEqual(status, (400, b''))
+        self.assertEqual(status, (400, b'', 'text/html'))
         self.assertFalse(self.source_httpd.display_queue)
 
     def test_display_data_to_message(self):
