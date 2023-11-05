@@ -3,36 +3,25 @@ from typing import Tuple
 import requests
 import time
 
-_DAYS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"]
+_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-
-def _boundary(x: int, y: int, min: int, max: int) -> Tuple[int, int]:
-    while x < min:
-        x += max
-        y -= 1
-    while x >= max:
-        x -= max
-        y += 1
-    return x, y
 
 
 class Clock:
     utc_offset_sec = {}
 
     def __init__(self, year: int = 1970, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
-        second, minute = _boundary(second, minute, 0, 60)
-        minute, hour = _boundary(minute, hour, 0, 60)
-        hour, day = _boundary(hour, day, 1, 24)
-        # todo correct day, month & year overflow
-        day, month = _boundary(day, month, 1, 31)
+        # use time.mktime / time.localtime to handle under/overflow
+        t0 = time.mktime([year, month, day, hour, minute, second, 0, 0])  # weekday, yearday are unused
+        t1 = time.localtime(t0)
 
-        self.year = year
-        self.month = month
-        self.day = day
-        self.hour = hour
-        self.minute = minute
-        self.second = second
+        self.year = t1[0]
+        self.month = t1[1]
+        self.day = t1[2]
+        self.hour = t1[3]
+        self.minute = t1[4]
+        self.second = t1[5]
+        self.weekday = t1[6]
 
     @staticmethod
     def now(timezone: str = None):
@@ -71,25 +60,14 @@ class Clock:
                 self.minute == clock.minute and
                 self.second == clock.second)
 
-    def add(self, hour: int = 0, minute: int = 0, second: int = 0):
+    def add(self, year: int = 0, month: int = 0, day: int = 0, hour: int = 0, minute: int = 0, second: int = 0):
         # overflow and underflow is handled in the constructor
-        return Clock(self.year,
-                     self.month,
-                     self.day,
+        return Clock(self.year + year,
+                     self.month + month,
+                     self.day + day,
                      self.hour + hour,
                      self.minute + minute,
                      self.second + second)
-
-    # Zeller's Congruence algorithm returns an integer from 0 (Saturday) to 6 (Friday)
-    def day_of_week(self):
-        if self.month < 3:
-            self.month += 12
-            self.year -= 1
-
-        k = self.year % 100
-        j = self.year // 100
-
-        return (self.day + 13 * (self.month + 1) // 5 + k + k // 4 + j // 4 - 2 * j) % 7
 
     def strftime(self, format: str) -> str:
         i = 0
@@ -125,7 +103,7 @@ class Clock:
                     result += '{:02d}'.format(self.second)
                     i += 2
                 elif format[i + 1] == 'a':
-                    result += _DAYS[self.day_of_week()]
+                    result += _DAYS[self.weekday]
                     i += 2
                 elif format[i + 1] == 'b':
                     result += _MONTHS[self.month - 1]

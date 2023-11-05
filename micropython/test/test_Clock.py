@@ -9,15 +9,19 @@ class ClockTest(unittest.TestCase):
         self.assertEqual(Clock(minute=60), Clock(hour=1, minute=0))
         self.assertEqual(Clock(hour=24), Clock(day=2, hour=0))
         self.assertEqual(Clock(day=32), Clock(month=2, day=1))  # Jan
+        self.assertEqual(Clock(month=2, day=29), Clock(month=3, day=1))  # Feb
+        self.assertEqual(Clock(year=2024, month=2, day=30), Clock(year=2024, month=3, day=1))  # Leap Feb
 
     def test_new_underflow(self):
         self.assertEqual(Clock(minute=1, second=-60), Clock())
         self.assertEqual(Clock(hour=1, minute=-60), Clock())
         self.assertEqual(Clock(day=2, hour=-24), Clock())
-        #self.assertEqual(Clock(month=2, day=-32), Clock())  # Jan
+        self.assertEqual(Clock(month=2, day=-30), Clock())  # Jan
+        self.assertEqual(Clock(month=3, day=-58), Clock())  # Feb
+        self.assertEqual(Clock(year=2024, month=3, day=-59), Clock(year=2024))  # Leap Feb
 
     def test_str(self):
-        self.assertEqual(str(Clock(0)), '0000-01-01 00:00:00')
+        self.assertEqual(str(Clock(1970)), '1970-01-01 00:00:00')
 
     def test_eq(self):
         self.assertEqual(Clock(), Clock())
