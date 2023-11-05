@@ -1,6 +1,7 @@
 import json
 import time
 
+from Wifi import Wifi
 from typing import Union, Tuple, List, Dict
 
 from Provider import Provider
@@ -11,7 +12,8 @@ from Source import Source
 
 
 class SourceHttpd(Source):
-    def __init__(self, display: Display, providers: Dict[str, Provider], port: int = 0):
+    def __init__(self, wifi: Wifi, display: Display, providers: Dict[str, Provider], port: int = 0):
+        self.wifi = wifi
         self.display = display
         self.providers = providers
         self.display_queue = []
@@ -81,4 +83,5 @@ class SourceHttpd(Source):
                 self.scheduled_time = time.ticks_add(time.ticks_ms(), interval_ms) if interval_ms else None
                 return message
 
+        self.wifi.connect()
         self.httpd.poll(1000 if is_stopped else 0)

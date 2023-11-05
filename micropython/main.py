@@ -21,7 +21,7 @@ from SourceUart import SourceUart
 from SourceWords import SourceWords
 from UartFrame import UartFrame
 from UartMessage import UartMessage
-from Wifi import wifi_connect
+from Wifi import Wifi
 
 import Config
 
@@ -129,13 +129,15 @@ def main_loop(source: Source):
 
 
 if is_picow:
-    wifi_connect()
+    wifi = Wifi()
+    wifi.connect()
+
     downstream_machine_reset()
     time.sleep_ms(1000)
 
     display = Display(Config.display_order, Config.display_offsets)
     # board_source = SourceWords(Config.test_words, Display(Config.display_order, Config.display_offsets))
-    board_source = SourceHttpd(display, Config.providers, 80)
+    board_source = SourceHttpd(wifi, display, Config.providers, 80)
 else:
     board_source = SourceUart(uart_upstream)
 

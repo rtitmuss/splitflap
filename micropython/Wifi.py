@@ -1,15 +1,36 @@
-import network
-import ntptime
+# ignore import errors with unit tests on laptop
+try:
+    import network
+    import ntptime
+except ImportError:
+    pass
 
-import secret
+from secret import WIFI
 
-def wifi_connect():
-    network.hostname("splitflap")
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(secret.WIFI_SSID, secret.WIFI_PASSWORD)
 
-    ntptime.settime()
+class Wifi:
+    def __init__(self):
+        self.is_connected = False
 
-    sta_if = network.WLAN(network.STA_IF)
-    print("listening on {}:80".format(sta_if.ifconfig()[0]))
+        network.hostname("splitflap")
+        self.wlan = network.WLAN(network.STA_IF)
+        self.wlan.active(True)
+
+    def connect(self):
+        if self.wlan.isconnected():
+            if not self.is_connected:
+                self.is_connected = True
+
+                ntptime.settime()
+
+                sta_if = network.WLAN(network.STA_IF)
+                print("wifi connected {}".format(sta_if.ifconfig()[0]))
+
+        else:
+            status = self.wlan.status()
+            if status != network.STAT_CONNECTING:
+                if self.is_connected:
+                    self.is_connected = False
+                    print("wifi disconnected")
+
+                self.wlan.connect(WIFI["SSID"], WIFI["PASSWORD"])
