@@ -1,8 +1,8 @@
-from Clock import Clock
-from Display import Display
-from Message import Message
-from Provider import Provider
 from typing import Union, Tuple
+
+from Display import Display
+from provider.Clock import Clock
+from provider.Provider import Provider
 
 
 class ProviderClock(Provider):

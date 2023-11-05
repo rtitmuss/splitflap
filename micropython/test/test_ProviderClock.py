@@ -1,6 +1,6 @@
 import unittest
 
-from ProviderClock import ProviderClock
+from provider.ProviderClock import ProviderClock
 
 
 class DisplayMock:

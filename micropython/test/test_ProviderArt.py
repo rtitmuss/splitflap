@@ -1,6 +1,6 @@
 import unittest
 
-from ProviderArt import ProviderArt
+from provider.ProviderArt import ProviderArt
 
 
 class DisplayMock:

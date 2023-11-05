@@ -1,7 +1,7 @@
 import unittest
 
 from Message import Message
-from ProviderMotion import ProviderMotion
+from provider.ProviderMotion import ProviderMotion
 
 
 class DisplayMock:

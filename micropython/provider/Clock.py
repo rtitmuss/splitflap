@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import requests
 import time
 

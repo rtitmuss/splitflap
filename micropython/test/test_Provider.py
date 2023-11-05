@@ -1,7 +1,7 @@
 import unittest
 
 from Message import Message
-from Provider import Provider
+from provider.Provider import Provider
 
 
 class MockDisplay:

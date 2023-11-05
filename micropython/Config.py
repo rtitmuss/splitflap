@@ -1,9 +1,9 @@
+from provider.ProviderArt import ProviderArt
+from provider.ProviderClock import ProviderClock
+from provider.ProviderMotion import ProviderMotion
+
 # element order when displaying alphabet
 # display_order = 'abcdefghijklmnopqrst'
-from ProviderArt import ProviderArt
-from ProviderClock import ProviderClock
-from ProviderMotion import ProviderMotion
-
 display_order = 'rqnmjifebatspolkhgdc'
 
 # flap offsets in display order from calibration

@@ -1,10 +1,10 @@
 import random
+from typing import Union, Tuple
 
 import StepperMotor
 from Display import Display
 from Message import Message
-from Provider import Provider
-from typing import Union, Tuple
+from provider.Provider import Provider
 
 
 class ProviderMotion(Provider):
