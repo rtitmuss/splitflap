@@ -1,6 +1,6 @@
 import unittest
 
-from SourceWords import SourceWords
+from primary.SourceWords import SourceWords
 
 
 class SourceWordsTest(unittest.TestCase):

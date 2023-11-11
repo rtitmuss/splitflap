@@ -1,6 +1,6 @@
 from typing import Union, Tuple
 
-from Display import Display
+from primary.Display import Display
 from provider.Clock import Clock
 from provider.Provider import Provider
 

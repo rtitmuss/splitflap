@@ -1,13 +1,13 @@
 import time
 
-from Wifi import Wifi
 from typing import Union, Tuple, Dict
 
-from provider.Provider import Provider
-from Display import Display
-from Httpd import Httpd, decode_url_encoded
 from Message import Message
 from Source import Source
+from provider.Provider import Provider
+from primary.Display import Display
+from primary.Httpd import Httpd, decode_url_encoded
+from primary.Wifi import Wifi
 
 
 class SourceHttpd(Source):

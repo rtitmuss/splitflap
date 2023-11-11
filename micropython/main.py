@@ -1,27 +1,27 @@
 import gc
 import math
+import machine
+import micropython
 import time
 
 from array import array
 from random import randint
-
-import machine
-import micropython
 from machine import Pin, Timer, UART
 from micropython import const
 
-from Display import Display
 from ElementGpio import ElementGpio
 from ElementUart import ElementUart
 from InvertedNeoPixel import InvertedNeoPixel
 from Panel import Panel
 from Source import Source
-from SourceHttpd import SourceHttpd
 from SourceUart import SourceUart
-from SourceWords import SourceWords
 from UartFrame import UartFrame
 from UartMessage import UartMessage
-from Wifi import Wifi
+
+from primary.Display import Display
+from primary.SourceHttpd import SourceHttpd
+#from primary.SourceWords import SourceWords
+from primary.Wifi import Wifi
 
 import Config
 

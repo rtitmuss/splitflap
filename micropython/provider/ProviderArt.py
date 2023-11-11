@@ -1,7 +1,7 @@
 import random
 from typing import Union, Tuple
 
-from Display import Display
+from primary.Display import Display
 from provider.Provider import Provider
 
 

@@ -1,7 +1,7 @@
 from typing import Union, Tuple, Dict
 
-from Display import Display
 from Message import Message, LETTERS
+from primary.Display import Display
 
 
 class Provider:

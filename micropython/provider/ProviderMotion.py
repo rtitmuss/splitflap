@@ -2,8 +2,8 @@ import random
 from typing import Union, Tuple
 
 import StepperMotor
-from Display import Display
 from Message import Message
+from primary.Display import Display
 from provider.Provider import Provider
 
 

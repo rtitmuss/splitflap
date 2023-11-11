@@ -1,5 +1,5 @@
 import unittest
-from Httpd import Httpd, decode_url_encoded
+from primary.Httpd import Httpd, decode_url_encoded
 
 
 def raise_error():

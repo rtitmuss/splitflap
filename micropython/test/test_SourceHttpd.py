@@ -1,8 +1,8 @@
 
 import unittest
 from Message import Message
-from Provider import Provider
-from SourceHttpd import SourceHttpd, decode_url_encoded
+from provider.Provider import Provider
+from primary.SourceHttpd import SourceHttpd, decode_url_encoded
 
 
 class MockDisplay:

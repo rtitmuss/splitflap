@@ -1,6 +1,6 @@
 import unittest
-from Display import Display
 from Message import Message
+from primary.Display import Display
 
 
 class TestDisplay(unittest.TestCase):

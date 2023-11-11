@@ -3,7 +3,7 @@ import time
 
 from micropython import const
 
-from Display import Display
+from primary.Display import Display
 from typing import Union
 
 from Message import Message
