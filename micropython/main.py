@@ -18,13 +18,6 @@ from SourceUart import SourceUart
 from UartFrame import UartFrame
 from UartMessage import UartMessage
 
-from primary.Display import Display
-from primary.SourceHttpd import SourceHttpd
-#from primary.SourceWords import SourceWords
-from primary.Wifi import Wifi
-
-import Config
-
 # primary or downstream panel
 is_picow: bool = True
 try:
@@ -129,6 +122,12 @@ def main_loop(source: Source):
 
 
 if is_picow:
+    import Config
+    from primary.Display import Display
+    from primary.SourceHttpd import SourceHttpd
+    # from primary.SourceWords import SourceWords
+    from primary.Wifi import Wifi
+
     wifi = Wifi()
     wifi.connect()
 
