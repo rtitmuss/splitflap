@@ -1,12 +1,14 @@
 from provider.ProviderArt import ProviderArt
 from provider.ProviderClock import ProviderClock
+from provider.ProviderDadJoke import ProviderDadJoke
 from provider.ProviderMotion import ProviderMotion
 
 # element order when displaying alphabet
-# display_order = 'abcdefghijklmnopqrst'
-display_order = 'rqnmjifebatspolkhgdc'
+# display_order = ['abcdefghij','klmnopqrst']
+display_order = ['rqnmjifeba',
+                 'tspolkhgdc']
 
-# flap offsets in display order from calibration
+# flap offsets in display order for calibration
 display_offsets = [0, 0, 0, 0, 5, 22, 11, 0, 0, 0,
                    0, 0, 0, 0, 32, 0, 0, 0, 0, 0]
 
@@ -16,6 +18,7 @@ providers = {
     "{CLOCK_NYC}": ProviderClock("NYC  %H:%M%d.%m.%Y", "America/New_York"),
     "{ART}": ProviderArt(),
     "{MOTION}": ProviderMotion(),
+    "{DAD_JOKE}": ProviderDadJoke(),
 }
 
 _alphabet = 'abcdefghijklmnopqrstuvwxyz'

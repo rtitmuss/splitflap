@@ -1,3 +1,5 @@
+from typing import List
+
 from Message import Message
 from StepperMotor import stepper_add_offset, stepper_sub_offset
 
@@ -10,10 +12,59 @@ def reorder(data, default, indices):
     return reordered_data
 
 
+def ljust(s: str, length: int) -> str:
+    return s + ' ' * (length - len(s))
+
+
+def split_string_by_length(input_string: str, cols: int) -> List[str]:
+    words = input_string.split()
+    result = []
+    current_line = []
+    current_length = 0
+
+    for word in words:
+        if current_length + len(word) + len(current_line) <= cols:
+            current_line.append(word)
+            current_length += len(word)
+        else:
+            if current_line:
+                result.append(' '.join(current_line))
+            current_line = [word]
+            current_length = len(word)
+
+        while current_length > cols:
+            line = ' '.join(current_line)
+            result.append(line[:cols])
+            current_line = [line[cols:]]
+            current_length = len(current_line[0])
+
+    if current_line:
+        result.append(' '.join(current_line))
+
+    return result
+
+
+def combine_lines_for_display(lines: List[str], rows: int, cols: int) -> List[str]:
+    result = []
+
+    for i in range(0, len(lines) - rows + 1, rows):
+        pair = [ljust(line, cols) for line in lines[i:i + rows]]
+        result.append(''.join(pair))
+
+    remaining_lines = len(lines) % rows
+    if remaining_lines > 0:
+        pair = [ljust(line, cols) for line in lines[-remaining_lines:]]
+        result.append(''.join(pair))
+
+    return result
+
+
 class Display:
-    def __init__(self, display_order: str, display_offsets: [int]):
+    def __init__(self, display_order: [str], display_offsets: [int]):
+        self.rows = len(display_order)
+        self.cols = len(display_order[0])
         self.display_offsets = display_offsets
-        self.physical_indices = [ord(char) - ord('a') for char in display_order]
+        self.physical_indices = [ord(char) - ord('a') for char in ''.join(display_order)]
 
         self.virtual_indices = [0] * len(self.physical_indices)
         for i, index in enumerate(self.physical_indices):
@@ -22,9 +73,12 @@ class Display:
     def display_length(self) -> int:
         return len(self.physical_indices)
 
-    def adjust_word(self, word: str) -> str:
+    def adjust_word(self, input_str: str) -> str:
         word_len = len(self.physical_indices)
-        return (word + ' ' * (word_len - len(word)))[:word_len]
+        return ljust(input_str, word_len)[:word_len]
+
+    def format_string_left_justified(self, input_str: str) -> List[str]:
+        return combine_lines_for_display(split_string_by_length(input_str, self.cols), self.rows, self.cols)
 
     def virtual_to_physical(self, message: Message) -> Message:
         rpm = message.get_rpm()

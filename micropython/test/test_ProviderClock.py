@@ -14,8 +14,8 @@ class PythonClockTest(unittest.TestCase):
         self.provider = ProviderClock("%H.%M", None)
 
     def test_get_word(self):
-        word_or_message, interval_ms = self.provider.get_word(None, self.display)
-        self.assertIsInstance(word_or_message, str)
+        word, interval_ms = self.provider.get_word(None, self.display)
+        self.assertIsInstance(word, str)
         self.assertIsInstance(interval_ms, int)
 
 
