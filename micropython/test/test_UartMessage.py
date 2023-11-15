@@ -50,6 +50,10 @@ class UartMessageTest(unittest.TestCase):
         self.assertEqual(is_stopped, True)
         self.assertEqual(motor_position, [1, 2, 3])
 
+    def test_ack_invalid(self):
+        self.uart_frame.buffer = b'\xf1\x03\n\xfe/ \xb8'
+        self.assertIsNone(self.uart_message.recv_ack())
+
     def test_ack_timeout(self):
         self.uart_message.buffer = None
         result = self.uart_message.recv_ack()

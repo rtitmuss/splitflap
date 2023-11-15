@@ -27,19 +27,19 @@ class UartMessage:
 
     def send_message(self, seq: int, message: Message):
         n = len(message.get_element_position())
-        frame = struct.pack('BBB' + 'hh' * n, _CMD_MSG, seq,
+        frame = struct.pack('!BBB' + 'hh' * n, _CMD_MSG, seq,
                             message.get_rpm(), *message.get_element_delay(), *message.get_element_position())
         self.uart_frame.send_frame(frame)
 
     def send_machine_reset(self, seq: int):
-        frame = struct.pack('BBB', _CMD_RST, seq, 0)
+        frame = struct.pack('!BBB', _CMD_RST, seq, 0)
         self.uart_frame.send_frame(frame)
 
     def recv_message(self) -> Union[Tuple[int, Message], None]:
         frame = self.uart_frame.recv_frame()
         if frame:
             n = int((len(frame) - 3) / 4)
-            data = struct.unpack('BBB' + 'hh' * n, frame)
+            data = struct.unpack('!BBB' + 'hh' * n, frame)
 
             if data[0] == _CMD_MSG:
                 seq = data[1]
@@ -56,14 +56,14 @@ class UartMessage:
 
     def send_ack(self, seq: int, is_stopped: bool, motor_position: [int]):
         n = len(motor_position)
-        frame = struct.pack('BBB' + 'h' * n, _CMD_ACK, seq, is_stopped, *motor_position)
+        frame = struct.pack('!BBB' + 'h' * n, _CMD_ACK, seq, is_stopped, *motor_position)
         self.uart_frame.send_frame(frame)
 
     def recv_ack(self) -> Union[Tuple[int, bool, List[int]], None]:
         frame = self.uart_frame.recv_frame()
         if frame:
             n = int((len(frame) - 3) / 2)
-            data = struct.unpack('BBB' + 'h' * n, frame)
+            data = struct.unpack('!BBB' + 'h' * n, frame)
 
             if data[0] == _CMD_ACK:
                 seq = data[1]
