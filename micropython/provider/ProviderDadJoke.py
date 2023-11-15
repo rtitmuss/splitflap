@@ -7,7 +7,7 @@ from typing import Union, Tuple, List
 from primary.Display import Display
 from provider.Provider import Provider
 
-_URL = const("https://icanhazdadjoke.com/search")
+_URL = const("https://icanhazdadjoke.com")
 _HEADERS = {"Accept": "text/plain",
             "User-Agent": "Splitflap (https://github.com/rtitmuss/splitflap)"}
 
