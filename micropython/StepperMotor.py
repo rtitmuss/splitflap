@@ -1,7 +1,7 @@
 # 28BYJ-48
 from micropython import const
 
-STEPS_PER_REVOLUTION = const(2038)
+STEPS_PER_REVOLUTION = const(2048)
 
 
 def stepper_add(x: int, y: int) -> int:
