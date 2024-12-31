@@ -2,6 +2,7 @@ from provider.ProviderArt import ProviderArt
 from provider.ProviderClock import ProviderClock
 from provider.ProviderDadJoke import ProviderDadJoke
 from provider.ProviderMotion import ProviderMotion
+from provider.ProviderNewYearCountdown import ProviderNewYearCountdown
 from provider.ProviderLetters import ProviderLetters
 
 # element order when displaying alphabet
@@ -11,12 +12,13 @@ display_order = ['rqnmjifeba',
 
 # flap offsets in display order for calibration
 display_offsets = [0, 0, -4, 0, 9, 22, 11, 0, 0, 0,
-                   2, 0, 0, -4, 32, 0, 0, 0, 0, 0]
+                   2, 0, 0, -16, 32, 0, 0, 0, 0, 0]
 
 providers = {
     "{CLOCK_STO}": ProviderClock("STO  %H:%M%d.%m.%Y", "Europe/Stockholm"),
     "{CLOCK_ADL}": ProviderClock("ADL  %H:%M%d.%m.%Y", "Australia/Adelaide"),
     "{CLOCK_NYC}": ProviderClock("NYC  %H:%M%d.%m.%Y", "America/New_York"),
+    "{NEW_YEAR_STO}": ProviderNewYearCountdown("Europe/Stockholm"),
     "{ART}": ProviderArt(),
     "{MOTION}": ProviderMotion(),
     "{DAD_JOKE}": ProviderDadJoke(),
