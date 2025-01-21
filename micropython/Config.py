@@ -4,6 +4,7 @@ from provider.ProviderDadJoke import ProviderDadJoke
 from provider.ProviderMotion import ProviderMotion
 from provider.ProviderNewYearCountdown import ProviderNewYearCountdown
 from provider.ProviderLetters import ProviderLetters
+from provider.ProviderWordClock import ProviderWordClock
 
 # element order when displaying alphabet
 # display_order = ['abcdefghij','klmnopqrst']
@@ -21,6 +22,8 @@ providers = {
     "{CLOCK_STO}": ProviderClock("STO  %H:%M%d.%m.%Y", "Europe/Stockholm"),
     "{CLOCK_ADL}": ProviderClock("ADL  %H:%M%d.%m.%Y", "Australia/Adelaide"),
     "{CLOCK_NYC}": ProviderClock("NYC  %H:%M%d.%m.%Y", "America/New_York"),
+    "{WORD_CLOCK_STO_EN}": ProviderWordClock("en", "Europe/Stockholm"),
+    "{WORD_CLOCK_STO_SV}": ProviderWordClock("sv", "Europe/Stockholm"),
     "{NEW_YEAR_STO}": ProviderNewYearCountdown("Europe/Stockholm"),
     "{ART}": ProviderArt(),
     "{MOTION}": ProviderMotion(),
