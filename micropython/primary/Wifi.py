@@ -1,3 +1,6 @@
+from typing import Callable
+from time import sleep
+
 # ignore import errors with unit tests on laptop
 try:
     import network
@@ -6,6 +9,17 @@ except ImportError:
     pass
 
 from secret import WIFI
+
+
+def with_backoff(f: Callable, max_retries=5, initial_delay=1, max_delay=60):
+    delay = initial_delay
+    for attempt in range(1, max_retries + 1):
+        try:
+            f()
+            return True
+        except Exception as e:
+            sleep(delay)
+            delay = min(delay * 2, max_delay)
 
 
 class Wifi:
@@ -21,7 +35,8 @@ class Wifi:
             if not self.is_connected:
                 self.is_connected = True
 
-                ntptime.settime()
+                if not with_backoff(ntptime.settime):
+                    print("ntp set time failed")
 
                 sta_if = network.WLAN(network.STA_IF)
                 print("wifi connected {}".format(sta_if.ifconfig()[0]))
