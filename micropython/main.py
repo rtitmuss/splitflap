@@ -39,18 +39,18 @@ UART_FRAME_TIMEOUT_MS = const(200)
 
 uart_upstream = UartMessage(
     UartFrame(
-        UART(0,
-             baudrate=UART_BAUD_RATE,
-             tx=Pin(16, Pin.IN, Pin.PULL_UP),
-             rx=Pin(17, Pin.OUT, Pin.PULL_UP),
-             timeout=UART_CHAR_TIMEOUT_MS)))
-
-uart_downstream = UartMessage(
-    UartFrame(
         UART(1,
              baudrate=UART_BAUD_RATE,
              tx=Pin(4, Pin.IN, Pin.PULL_UP),
              rx=Pin(5, Pin.OUT, Pin.PULL_UP),
+             timeout=UART_CHAR_TIMEOUT_MS)))
+
+uart_downstream = UartMessage(
+    UartFrame(
+        UART(0,
+             baudrate=UART_BAUD_RATE,
+             tx=Pin(16, Pin.IN, Pin.PULL_UP),
+             rx=Pin(17, Pin.OUT, Pin.PULL_UP),
              timeout=UART_CHAR_TIMEOUT_MS)))
 
 # panel and element
