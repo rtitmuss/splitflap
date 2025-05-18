@@ -8,15 +8,12 @@ from provider.ProviderWordClock import ProviderWordClock
 
 # element order when displaying alphabet
 # display_order = ['abcdefghij','klmnopqrst']
-display_order = ['rqnmjifeba',
-                 'tspolkhgdc']
+display_order = ['vurqnmjifeba',
+                 'xwtspolkhgdc']
 
 # flap offsets in display order for calibration
-display_offsets = [0, 0, -4, 0, 9, 22, 11, 0, 0, 0,
-                   2, 0, 0, -16, 32, 0, 0, 0, 0, 0]
-
-display_offsets = [-12, -9, -23, 7, 12, 21, 15, 3, -5, -1,
-                    14, -15, -14, -29, 21, -1, -7, -7, -3, 0]
+display_offsets = [0, 0, -12, -9, -23, 7, 12, 21, 15, 3, -5, -1,
+                   0, 0, 14, -15, -14, -29, 21, -1, -7, -7, -3, 0]
 
 providers = {
     "{CLOCK_STO}": ProviderClock("STO  %H:%M%d.%m.%Y", "Europe/Stockholm"),

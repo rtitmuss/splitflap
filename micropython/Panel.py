@@ -1,4 +1,5 @@
 import math
+import time
 
 from micropython import const
 
@@ -50,6 +51,15 @@ class Panel:
             element.step()
 
         return self.step_interval_us
+
+    def test_home(self) -> [int]:
+        num_elements = len(self.element_list)
+        m = Message(15, [0] * num_elements, [STEPS_PER_REVOLUTION + 1] * num_elements)
+        self.set_message(m)
+        while not self.is_stopped():
+            delay_us = self.step()
+            time.sleep_us(delay_us)
+        return self.get_motor_position()
 
 
 # ignore micropython.native with unit tests on laptop

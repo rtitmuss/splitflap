@@ -82,7 +82,8 @@ class Element:
 
     def is_stopped(self) -> bool:
         return self.panic or (self.element_delay == 0
-                              and self.motor_position == self.element_position)
+                              and self.motor_position == self.element_position
+                              and self.element_rotation <= 0)
 
     def step(self):
         if self.home_pin is None:
