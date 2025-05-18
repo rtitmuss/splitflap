@@ -13,13 +13,14 @@ class ElementGpio:
                  motor_b,
                  motor_c,
                  motor_d,
-                 hall_sensor_active=0):
+                 hall_sensor_active=0,
+                 reverse_direction=False):
         self.element = Element()
         self.hall_sensor_active = hall_sensor_active
         self.sensor_pin = Pin(hall_sensor, Pin.IN, Pin.PULL_UP)
         self.motor_pin = list(
             map(lambda x: Pin(x, Pin.OUT, value=0),
-                [motor_a, motor_b, motor_c, motor_d]))
+                [motor_d, motor_c, motor_b, motor_a] if reverse_direction else [motor_a, motor_b, motor_c, motor_d]))
 
     def __str__(self):
         return str(self.element)

@@ -55,10 +55,10 @@ uart_downstream = UartMessage(
 
 # panel and element
 panel = Panel([
-    ElementGpio(2, 28, 27, 26, 22),
-    ElementGpio(14, 18, 19, 20, 21),
-    ElementGpio(1, 9, 8, 7, 6),
-    ElementGpio(15, 10, 11, 12, 13),
+    ElementGpio(2, 28, 27, 26, 22, reverse_direction=False),
+    ElementGpio(14, 18, 19, 20, 21, reverse_direction=False),
+    ElementGpio(1, 9, 8, 7, 6, reverse_direction=False),
+    ElementGpio(15, 10, 11, 12, 13, reverse_direction=False),
     ElementUart(uart_downstream)
 ])
 
@@ -67,7 +67,6 @@ def downstream_machine_reset():
     seq = uart_downstream.next_seq()
     uart_downstream.send_machine_reset(seq)
     # TODO wait for ack
-
 
 @micropython.native
 def main_loop(source: Source):
