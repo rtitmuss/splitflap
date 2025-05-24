@@ -16,9 +16,9 @@ display_offsets = [0, 0, -12, -9, -23, 7, 12, 21, 15, 3, -5, -1,
                    0, 0, 14, -15, -14, -29, 21, -1, -7, -7, -3, 0]
 
 providers = {
-    "{CLOCK_STO}": ProviderClock("STO  %H:%M%d.%m.%Y", "Europe/Stockholm"),
-    "{CLOCK_ADL}": ProviderClock("ADL  %H:%M%d.%m.%Y", "Australia/Adelaide"),
-    "{CLOCK_NYC}": ProviderClock("NYC  %H:%M%d.%m.%Y", "America/New_York"),
+    "{CLOCK_STO}": ProviderClock("STO  %H:%M    %d.%m.%Y", "Europe/Stockholm"),
+    "{CLOCK_ADL}": ProviderClock("ADL  %H:%M    %d.%m.%Y", "Australia/Adelaide"),
+    "{CLOCK_NYC}": ProviderClock("NYC  %H:%M    %d.%m.%Y", "America/New_York"),
     "{WORD_CLOCK_STO_EN}": ProviderWordClock("en", "Europe/Stockholm"),
     "{WORD_CLOCK_STO_SV}": ProviderWordClock("sv", "Europe/Stockholm"),
     "{NEW_YEAR_STO}": ProviderNewYearCountdown("Europe/Stockholm"),
