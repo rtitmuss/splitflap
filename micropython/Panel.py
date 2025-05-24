@@ -6,6 +6,7 @@ from micropython import const
 from StepperMotor import STEPS_PER_REVOLUTION
 from typing import Union
 from Element import Element
+from ElementGpio import ElementGpio
 from Message import Message
 
 
@@ -52,8 +53,8 @@ class Panel:
 
         return self.step_interval_us
 
-    def test_home(self) -> [int]:
-        num_elements = len(self.element_list)
+    def home(self) -> [int]:
+        num_elements = sum(isinstance(e, ElementGpio) for e in self.element_list)
         m = Message(15, [0] * num_elements, [STEPS_PER_REVOLUTION + 1] * num_elements)
         self.set_message(m)
         while not self.is_stopped():
