@@ -40,4 +40,4 @@ class ProviderDadJoke(Provider):
                 self.lines = display.format_string_left_justified(self.jokes.pop(0))
 
         joke_word = self.lines.pop(0) if self.lines else ''
-        return joke_word, 15000 if self.lines else None
+        return joke_word, 14000 if self.lines else None
