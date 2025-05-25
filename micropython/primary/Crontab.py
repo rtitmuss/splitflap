@@ -12,10 +12,18 @@ def expand_field(field, min_val, max_val):
                 values.update(range(min_val, max_val + 1, step))
             else:
                 start, end = map(int, range_part.split("-"))
-                values.update(range(start, end + 1, step))
+                if start > end:  # Handle overnight ranges
+                    values.update(range(start, max_val + 1, step))
+                    values.update(range(min_val, end + 1, step))
+                else:
+                    values.update(range(start, end + 1, step))
         elif "-" in part:  # Handle ranges (e.g., 10-20)
             start, end = map(int, part.split("-"))
-            values.update(range(start, end + 1))
+            if start > end:  # Handle overnight ranges
+                values.update(range(start, max_val + 1))
+                values.update(range(min_val, end + 1))
+            else:
+                values.update(range(start, end + 1))
         else:  # Handle single values
             values.add(int(part))
 
