@@ -108,13 +108,13 @@ class ClockTest(unittest.TestCase):
         utc = Clock.now()
         self.assertIsInstance(utc, Clock)
 
-    def test_now_timezone(self):
-        utc = Clock.now()
-        localtime = Clock.now('Europe/Stockholm')
-        self.assertNotEqual(utc, localtime)
+    def test_timezone(self):
+        TimezoneClock = Clock.timezone('Europe/Stockholm')
+        self.assertTrue(issubclass(TimezoneClock, Clock))
+        self.assertNotEqual(Clock.now(), TimezoneClock.now())
 
-    def test_now_invalid_timezone(self):
-        self.assertRaises(ValueError, Clock.now, 'city')
+    def test_timezone_invalid(self):
+        self.assertRaises(ValueError, Clock.timezone, 'city')
 
 
 if __name__ == '__main__':

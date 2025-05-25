@@ -76,7 +76,7 @@ def remove_diacritics(text: str) -> str:
 
 class ProviderWordClock(Provider):
     def __init__(self, lang: str = "en", timezone: str = None, clock_now: Callable = None):
-        self.clock_now = clock_now if clock_now else lambda: Clock.now(timezone)
+        self.clock_now = clock_now if clock_now else lambda: Clock.timezone(timezone).now()
         self.hour_strings = HOUR_STRINGS[lang]
         self.min_strings = MINUTE_STRINGS[lang]
 

@@ -134,7 +134,7 @@ if is_picow:
     time.sleep_ms(1000)
 
     display = Display(Config.display_order, Config.display_offsets)
-    clock = Clock.now(Config.default_timezone)
+    clock = Clock.timezone(Config.default_timezone)
     board_source = SourceHttpd(wifi, display, Config.providers, clock, 80)
 else:
     board_source = SourceUart(uart_upstream)

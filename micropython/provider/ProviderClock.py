@@ -11,6 +11,6 @@ class ProviderClock(Provider):
         self.timezone = timezone
 
     def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
-        clock = Clock.now(self.timezone)
+        clock = Clock.timezone(self.timezone).now()
         next_interval_ms = (60 - clock.second) * 1000
         return clock.strftime(self.format), next_interval_ms

@@ -19,8 +19,8 @@ def _days_to_new_year(year: int, month: int, day: int) -> int:
 
 
 class ProviderNewYearCountdown(Provider):
-    def __init__(self, timezone: str, clock_now: Callable = None):
-        self.clock_now = clock_now if clock_now else lambda: Clock.now(timezone)
+    def __init__(self, timezone: str, clock_now=None):
+        self.clock_now = clock_now if clock_now else lambda: Clock.timezone(timezone).now()
 
     def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
         now = self.clock_now()

@@ -11,7 +11,7 @@ class DisplayMock:
 class PythonClockTest(unittest.TestCase):
     def setUp(self):
         self.display = DisplayMock()
-        self.provider = ProviderClock("%H.%M", None)
+        self.provider = ProviderClock("%H.%M", "UTC")
 
     def test_get_word(self):
         word, interval_ms = self.provider.get_word(None, self.display)

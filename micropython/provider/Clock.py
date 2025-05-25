@@ -22,30 +22,36 @@ class Clock:
         self.weekday = t1[6]
 
     @staticmethod
-    def now(timezone: str = None):
-        # todo daylight saving time changes
-        if timezone and timezone not in Clock.utc_offset_sec:
-            Clock.get_timezone(timezone)
+    def now():
+        now = time.gmtime()
+        return Clock(now[0], now[1], now[2], now[3], now[4], now[5])
+
+    @staticmethod
+    def timezone(timezone: str):
+        if timezone not in Clock.utc_offset_sec:
+            try:
+                response = requests.get(
+                    'https://timeapi.io/api/TimeZone/zone?timeZone={}'.format(timezone))
+
+                if response.status_code == 200:
+                    data = response.json()
+                    if data and 'currentUtcOffset' in data and 'seconds' in data['currentUtcOffset']:
+                        Clock.utc_offset_sec[timezone] = data['currentUtcOffset']['seconds']
+                if response.status_code == 404:
+                    raise ValueError("Invalid timezone")
+
+            finally:
+                response.close()
 
         offset_sec = Clock.utc_offset_sec.get(timezone, 0)
 
-        now = time.gmtime()
-        return Clock(now[0], now[1], now[2], now[3], now[4], now[5]).add(second=offset_sec)
+        class TimezoneClock(Clock):
+            @staticmethod
+            def now():
+                now = time.gmtime()
+                return Clock(now[0], now[1], now[2], now[3], now[4], now[5] + offset_sec)
 
-    @staticmethod
-    def get_timezone(timezone: str):
-        response = requests.get(
-            'https://timeapi.io/api/TimeZone/zone?timeZone={}'.format(timezone))
-
-        if response.status_code == 200:
-            data = response.json()
-            if data:
-                if 'currentUtcOffset' in data and 'seconds' in data['currentUtcOffset']:
-                    Clock.utc_offset_sec[timezone] = data['currentUtcOffset']['seconds']
-        if response.status_code == 404:
-            raise ValueError("Invalid timezone")
-
-        response.close()
+        return TimezoneClock
 
     def __str__(self):
         return self.strftime('%Y-%m-%d %H:%M:%S')
