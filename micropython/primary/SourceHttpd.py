@@ -41,9 +41,9 @@ class SourceHttpd(Source):
 
         # HTTP server
         self.httpd = Httpd({
-            "POST /display": lambda req: self.process_post_display(req),
-            "GET /crontab": lambda req: self.process_get_crontab(req),
-            "POST /crontab": lambda req: self.process_post_crontab(req),
+            "POST /display": lambda url, body: self.process_post_display(body),
+            "GET /crontab": lambda url, body: self.process_get_crontab(),
+            "POST /crontab": lambda url, body: self.process_post_crontab(body),
         }, port)
 
     def load_crontab(self) -> list:
@@ -53,24 +53,22 @@ class SourceHttpd(Source):
         except OSError:
             return []
 
-    def process_post_display(self, request: str) -> Tuple[int, bytes, str]:
-        body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
-        form_data = decode_url_encoded(body)
+    def process_post_display(self, body: bytes) -> Tuple[int, bytes, str]:
+        form_data = decode_url_encoded(body.decode('utf-8'))
         if 'text' in form_data:
             self.override_message = form_data
             print("[HTTP] Received override message:", form_data)
             return 200, b'', 'text/plain'
         return 400, b'', 'text/plain'
 
-    def process_get_crontab(self, request: str) -> Tuple[int, bytes, str]:
+    def process_get_crontab(self) -> Tuple[int, bytes, str]:
         content = '\n'.join(self.crontab)
         return 200, content.encode('utf-8'), 'text/plain'
 
-    def process_post_crontab(self, request: str) -> Tuple[int, bytes, str]:
+    def process_post_crontab(self, body: bytes) -> Tuple[int, bytes, str]:
         try:
-            body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
             with open('crontab.txt', 'w') as f:
-                f.write(body)
+                f.write(body.decode('utf-8'))
 
             self.crontab = self.load_crontab() # Reload the crontab
             self.last_crontab_data = None  # Force a refresh of the current message

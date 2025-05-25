@@ -53,9 +53,26 @@ def decode_url_encoded(url_encoded: str) -> {str: str}:
     return data
 
 
-def _process_http_get(request: str) -> Tuple[int, bytes, str]:
-    url = request.split()[1].decode('utf-8')
+def parse_headers(header_bytes):
+    header_text = header_bytes.decode()
+    lines = header_text.split('\r\n')
+    if not lines[0]:
+        raise ValueError("Empty request line")
+    request_line = lines[0]
+    parts = request_line.split(' ')
+    if len(parts) != 3:
+        raise ValueError(f"Invalid request line: {request_line}")
+    method, url, _ = parts
+    headers = {}
+    for line in lines[1:]:
+        if ': ' in line:
+            k, v = line.split(': ', 1)
+            headers[k.lower()] = v
+    return method, url, headers
 
+
+def _process_http_get(url: str, body: bytes) -> Tuple[int, bytes, str]:
+    # Ignore body for GET requests
     url_extension = url[url.rfind("."):]
     content_type = _CONTENT_TYPE.get(url_extension, "text/html")
 
@@ -85,40 +102,69 @@ class Httpd():
         self.select_poll = select.poll()
         self.select_poll.register(server_socket, select.POLLIN)
 
-    def process_http_request(self, request: str) -> str:
+    def process_http_request(self, method: str, url: str, body: bytes) -> bytes:
+        handler_key = f"{method} {url}"
         for url_prefix, handler in self.handlers.items():
-            if request.startswith(url_prefix):
-                try:
-                    status, body, content_type = handler(request)
+            if handler_key.startswith(url_prefix):
+                status, body, content_type = handler(url, body)
 
-                    if status == 200:
-                        return _RESPONSE_200.format(content_type or "text/html").encode('utf-8') + body
-                    elif status == 404:
-                        return _RESPONSE_404.encode('utf-8')
-                    else:
-                        return _RESPONSE_400.encode('utf-8')
-                except Exception as e:
-                    print(e)
-                    return _RESPONSE_500.encode('utf-8')
+                if status == 200:
+                    return _RESPONSE_200.format(content_type or "text/html").encode('utf-8') + body
+                elif status == 404:
+                    return _RESPONSE_404.encode('utf-8')
+                else:
+                    return _RESPONSE_400.encode('utf-8')
 
         return _RESPONSE_400.encode('utf-8')
 
     def poll(self, timeout: int) -> None:
         events = self.select_poll.poll(timeout)
 
-        for socket, event in events:
-            if socket == self.server_socket:
+        for sock, event in events:
+            if sock == self.server_socket:
                 client_socket, client_address = self.server_socket.accept()
                 self.select_poll.register(client_socket, select.POLLIN)
             elif event & select.POLLIN:
-                request = socket.recv(1024)
-                if request:
-                    response = self.process_http_request(request)
+                try:
+                    request_buffer = bytearray()
+                    # Read headers
+                    while True:
+                        chunk = sock.recv(1024)
+                        if not chunk:
+                            break
+                        request_buffer.extend(chunk)
 
-                    response_view = memoryview(response)
-                    while response_view:
-                        sent = socket.send(response_view)
-                        response_view = response_view[sent:]
+                        if b'\r\n\r\n' in request_buffer:
+                            break
 
-                socket.close()
-                self.select_poll.unregister(socket)
+                    if request_buffer:
+                        header_end = request_buffer.find(b'\r\n\r\n')
+                        header_bytes = request_buffer[:header_end]
+                        method, url, headers = parse_headers(header_bytes)
+
+                        content_length = int(headers.get('content-length', '0'))
+                        body_start = header_end + 4
+                        body = request_buffer[body_start:]
+
+                        # Read remaining body data if needed
+                        remaining = content_length - len(body)
+                        while remaining > 0:
+                            chunk = sock.recv(min(1024, remaining))
+                            if not chunk:
+                                break
+                            body.extend(chunk)
+                            remaining -= len(chunk)
+
+                        response = self.process_http_request(method, url, body)
+                        sock.sendall(response)
+
+                except Exception as e:
+                    print(f"Error handling request: {e}")
+                    try:
+                        sock.sendall(_RESPONSE_500.encode('utf-8'))
+                    except:
+                        pass
+
+                finally:
+                    sock.close()
+                    self.select_poll.unregister(sock)
