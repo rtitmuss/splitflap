@@ -40,6 +40,8 @@ class SourceHttpd(Source):
         # HTTP server
         self.httpd = Httpd({
             "POST /display": lambda req: self.process_post_display(req),
+            "GET /crontab": lambda req: self.process_get_crontab(req),
+            "POST /crontab": lambda req: self.process_post_crontab(req),
         }, port)
 
     def load_crontab(self) -> list:
@@ -57,6 +59,27 @@ class SourceHttpd(Source):
             print("[HTTP] Received override message:", form_data)
             return 200, b'', 'text/html'
         return 400, b'', 'text/html'
+
+    def process_get_crontab(self, request: str) -> Tuple[int, bytes, str]:
+        try:
+            content = '\n'.join(self.crontab)
+            return 200, content.encode('utf-8'), 'text/plain'
+        except Exception as e:
+            print(f"Error getting crontab: {e}")
+            return 500, b'Error getting crontab', 'text/plain'
+
+    def process_post_crontab(self, request: str) -> Tuple[int, bytes, str]:
+        try:
+            body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
+            with open('crontab.txt', 'w') as f:
+                f.write(body)
+            # Reload the crontab
+            self.crontab = self.load_crontab()
+            self.last_crontab_data = None  # Force a refresh of the current message
+            return 200, b'Crontab updated', 'text/plain'
+        except OSError as e:
+            print(f"Error writing crontab: {e}")
+            return 500, b'Error writing crontab', 'text/plain'
 
     def display_data_to_message(self, display_data: Dict[str, str], physical_motor_position: [int]) -> Tuple[Message, int]:
         motor_pos = self.display.physical_to_virtual(physical_motor_position)

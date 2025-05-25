@@ -1,164 +1,274 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Split Flap</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            text-align: center;
+  <title>Split Flap</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #fff;
+      color: #202124;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .content-container {
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #title {
+      font-family: 'expressway', sans-serif;
+      font-style: normal;
+      font-weight: 200;
+      font-size: 48px;
+      background-color: black;
+      color: white;
+      letter-spacing: 2px;
+      margin: 5px 0;
+      padding: 5px;
+    }
+    #form {
+      background-color: #EDEDED;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .form-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap; /* wrap on small screens */
+      margin: 5px 0;
+    }
+    #form input[type="text"],
+    #form select,
+    #form button {
+      font-size: 16px;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #form button {
+      background-color: #f8f9fa;
+      border: 1px solid #dadce0;
+      cursor: pointer;
+    }
+    #form button:hover {
+      background-color: #e8e9ea;
+    }
+    #errorMessage {
+      color: #d93025;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    #preset-container {
+      margin-top: 30px;
+      font-size: 14px;
+      text-align: center;
+    }
+    #preset-container a {
+      margin: 0 5px;
+      color: #1a0dab;
+      text-decoration: none;
+    }
+    #preset-container a:hover {
+      text-decoration: underline;
+    }
+    .crontab-section {
+      margin-top: 40px;
+      padding: 20px;
+      background: #f1f3f4;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .crontab-section h2 {
+      margin: 0 0 10px;
+      font-weight: normal;
+      font-size: 18px;
+      color: #202124;
+    }
+    #crontabEditor {
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+      border: 1px solid #dcdcdc;
+      border-radius: 4px;
+      padding: 8px;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    #saveCrontab {
+      background-color: #f8f9fa;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    #saveCrontab:hover {
+      background-color: #e8e9ea;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      display: none;
+      font-size: 14px;
+    }
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+    }
+    .error {
+      background-color: #fce8e6;
+      color: #d93025;
+    }
+  </style>
+  <script>
+    const randomWords = ["Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape", "Honeydew"];
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+    async function fetchWithTimeout(resource, options) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 2000);
+      const response = await fetch(resource, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    }
+    async function submitGoForm() {
+      try {
+        const form = document.getElementById('form');
+        const response = await fetchWithTimeout(form.action, {
+          method: "post",
+          body: new URLSearchParams(new FormData(form))
+        });
+        if (!response.ok) {
+          throw new Error('Failed to send message');
         }
-        #title {
-            font-family: 'expressway', sans-serif;
-            font-style: normal;
-            font-weight: 200;
-            font-size: 48px;
-
-            background-color: black;
-            color: white;
-
-            letter-spacing: 2px;
-            margin: 10px 0;
+      } catch (error) {
+        showStatus('Error: ' + error, 'goStatus');
+      }
+    }
+    async function fillWithRandomWords() {
+      const textInput = document.getElementById("text_input");
+      shuffleArray(randomWords);
+      const words = [];
+      let words_len = 0;
+      for (const word of randomWords) {
+        if (words_len + word.length <= 20) {
+          words.push(word);
+          words_len += word.length + 1;
         }
-        #form {
-            background-color: #EDEDED;
-            margin: 40px 0;
-            padding: 10px 0;
+        if (words_len >= 20) {
+          break;
         }
-        #text_input {
-            width: 300px;
+      }
+      textInput.value = words.join(' ');
+      submitGoForm();
+    }
+    async function preset(text_preset, order_preset) {
+      const textInput = document.getElementById("text_input");
+      const orderInput = document.getElementById("order_input");
+      textInput.value = text_preset;
+      orderInput.value = order_preset;
+      submitGoForm();
+    }
+    fetch('/crontab')
+      .then(response => response.text())
+      .then(text => {
+        document.getElementById('crontabEditor').value = text;
+      })
+      .catch(error => {
+        showStatus('Error loading crontab: ' + error, true);
+      });
+    async function submitCrontabForm() {
+      fetch('/crontab', {
+        method: 'POST',
+        body: document.getElementById('crontabEditor').value
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to save crontab');
         }
-    </style>
-    <script>
-        const randomWords = [
-            "Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape", "Honeydew", "Kiwi", "Lemon",
-            "Hello", "World", "Spirit", "Purple", "Marvel", "Garden", "Elephant", "Football", "Birthday", "Rainbow",
-            "Keyboard", "Necklace", "Positive", "Mountain", "Campaign", "Hospital", "Orbit", "Pepper",
-            "7849501273", "2398756104", "5476928310", "1062547983", "3987165420",
-            "abcdefghijklmnopqrst", "defghijklmnopqrstuvw", "ghijklmnopqrstuvwxyz",
-            "a".repeat(20), "b".repeat(20), "y".repeat(20), "z".repeat(20),
-            "$".repeat(20), "&".repeat(20), "$#".repeat(5) + "#$".repeat(5),
-        ];
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        async function fetchWithTimeout(resource, options) {
-          const controller = new AbortController();
-          const id = setTimeout(() => controller.abort(), 2000);
-
-          const response = await fetch(resource, {
-            ...options,
-            signal: controller.signal
-          });
-          clearTimeout(id);
-          return response;
-        }
-
-        async function submitForm() {
-            try {
-                response = await fetchWithTimeout(form.action, {
-                    method: "post",
-                    body: new URLSearchParams(new FormData(form)) // application/x-www-form-urlencoded
-                });
-                if (response.ok) {
-                    errorMessage.style.display = "none";
-                } else {
-                    console.log('error', response)
-                    errorMessage.style.display = "block";
-                }
-            } catch (error) {
-                console.log('error', error)
-                errorMessage.style.display = "block";
-            }
-        }
-
-        async function fillWithRandomWords() {
-            const textInput = document.getElementById("text_input");
-            shuffleArray(randomWords);
-
-            const words = [];
-            let words_len = 0;
-
-            for (const word of randomWords) {
-                if (words_len + word.length <= 20) {
-                    words.push(word);
-                    words_len += word.length + 1;
-                }
-                if (words_len >= 20) {
-                    break;
-                }
-            }
-
-            textInput.value = words.join(' ');
-            submitForm();
-        }
-
-        async function preset(text_preset, order_preset) {
-            const textInput = document.getElementById("text_input");
-            const orderInput = document.getElementById("order_input");
-            textInput.value = text_preset;
-            orderInput.value = order_preset;
-            submitForm();
-        }
-    </script>
+      })
+      .catch(error => {
+        showStatus('Error saving crontab: ' + error, 'crontabStatus');
+      });
+    }
+    function showStatus(message, elementId) {
+      const status = document.getElementById(elementId);
+      status.textContent = message;
+      status.className = 'status error';
+      status.style.display = 'block';
+      setTimeout(() => { status.style.display = 'none'; }, 3000);
+    }
+  </script>
 </head>
 <body>
-    <p><span id="title">&nbsp;SPLIT FLAP&nbsp;</span></p>
+  <div id="title">&nbsp;SPLIT FLAP&nbsp;</div>
+  <p>
+  <div class="content-container">
     <form id="form" method="post" action="/display">
-        <label for="text_input">Enter up to 24 letters!</label>
-        <br>
-        <input type="text" id="text_input" name="text" maxlength="20">
-        <br>
-        <select id="order_input" name="order" required>
+      <div class="form-row">
+          <input type="text" id="text_input" name="text" maxlength="20" placeholder="Enter up to 24 letters">
+          <select id="order_input" name="order" required>
             <option value="start_in_sync">|&gt;</option>
             <option value="end_in_sync">&gt;|</option>
             <option value="sweep">&gt;&gt;</option>
             <option value="diagonal_sweep">&gt;v</option>
             <option value="random">##</option>
-        </select>
-        <select id="rpm_input" name="rpm" required>
+          </select>
+          <select id="rpm_input" name="rpm" required>
             <option value="5">5 rpm</option>
-            <option value="6">6 rpm</option>
-            <option value="7">7 rpm</option>
-            <option value="8">8 rpm</option>
-            <option value="9">9 rpm</option>
             <option value="10" selected>10 rpm</option>
-            <option value="11">11 rpm</option>
-            <option value="12">12 rpm</option>
-            <option value="13">13 rpm</option>
-            <option value="14">14 rpm</option>
             <option value="15">15 rpm</option>
-        </select>
-        <button type="button" onclick="submitForm()">Submit</button>
+          </select>
+      </div>
+      <div class="form-row">
+        <button type="button" onclick="submitGoForm()">Go</button>
         <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
+      </div>
+      <div id="goStatus" class="status"></div>
     </form>
-    <p id="errorMessage" style="color: red; display: none;">Error. Please try again.</p>
     <div id="preset-container">
-        Clock
-        <a href="#" onclick="preset('{clock_sto}', 'start_in_sync')">STO</a>
-        <a href="#" onclick="preset('{clock_adl}', 'start_in_sync')">ADL</a>
-        <a href="#" onclick="preset('{clock_nyc}', 'start_in_sync')">NYC</a>
-        <br/>
-        Word Clock
-        <a href="#" onclick="preset('{word_clock_sto_en}', 'end_in_sync')">STO English</a>
-        <a href="#" onclick="preset('{word_clock_sto_sv}', 'end_in_sync')">STO Svenska</a>
-        <br/>
-        <a href="#" onclick="preset('{new_year_sto}', 'start_in_sync')">NYE Countdown</a>
-        <br/>
-        <a href="#" onclick="preset('{art}', 'end_in_sync')">Art</a>
-        <br/>
-        <a href="#" onclick="preset('{motion}', 'start_in_sync')">Motion</a>
-        <br/>
-        <a href="#" onclick="preset('{dad_joke}', 'end_in_sync')">Dad Joke</a>
-        <br/>
-        <a href="#" onclick="preset('aaaaaaaaaaaaaaaaaaaaaaaa', 'end_in_sync')">As</a>
-        <a href="#" onclick="preset('zzzzzzzzzzzzzzzzzzzzzzzz', 'end_in_sync')">Zs</a>
-        <a href="#" onclick="preset('{letters}', 'end_in_sync')">All</a>
+      Clock
+      <a href="#" onclick="preset('{clock_sto}', 'start_in_sync')">STO</a>
+      <a href="#" onclick="preset('{clock_adl}', 'start_in_sync')">ADL</a>
+      <a href="#" onclick="preset('{clock_nyc}', 'start_in_sync')">NYC</a><br/>
+      Word Clock
+      <a href="#" onclick="preset('{word_clock_sto_en}', 'end_in_sync')">STO English</a>
+      <a href="#" onclick="preset('{word_clock_sto_sv}', 'end_in_sync')">STO Svenska</a><br/>
+      <a href="#" onclick="preset('{new_year_sto}', 'start_in_sync')">NYE Countdown</a><br/>
+      <a href="#" onclick="preset('{art}', 'end_in_sync')">Art</a><br/>
+      <a href="#" onclick="preset('{motion}', 'start_in_sync')">Motion</a><br/>
+      <a href="#" onclick="preset('{dad_joke}', 'end_in_sync')">Dad Joke</a><br/>
+      <a href="#" onclick="preset('aaaaaaaaaaaaaaaaaaaaaaaa', 'end_in_sync')">As</a>
+      <a href="#" onclick="preset('zzzzzzzzzzzzzzzzzzzzzzzz', 'end_in_sync')">Zs</a>
+      <a href="#" onclick="preset('{letters}', 'end_in_sync')">All</a>
     </div>
+    <div class="crontab-section">
+      <h2>Crontab Editor</h2>
+      <textarea id="crontabEditor" placeholder="Loading crontab..."></textarea>
+      <br>
+      <button type="button" onclick="submitCrontabForm()">Save Crontab</button>
+      <div id="crontabStatus" class="status"></div>
+    </div>
+  </div>
 </body>
-
 </html>
