@@ -124,7 +124,7 @@ if is_picow:
     import Config
     from primary.Display import Display
     from primary.SourceHttpd import SourceHttpd
-    # from primary.SourceWords import SourceWords
+    from provider.Clock import Clock
     from primary.Wifi import Wifi
 
     wifi = Wifi()
@@ -134,8 +134,8 @@ if is_picow:
     time.sleep_ms(1000)
 
     display = Display(Config.display_order, Config.display_offsets)
-    # board_source = SourceWords(Config.test_words, Display(Config.display_order, Config.display_offsets))
-    board_source = SourceHttpd(wifi, display, Config.providers, 80)
+    clock = Clock.now(Config.default_timezone)
+    board_source = SourceHttpd(wifi, display, Config.providers, clock, 80)
 else:
     board_source = SourceUart(uart_upstream)
 

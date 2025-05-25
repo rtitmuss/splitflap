@@ -5,6 +5,7 @@ from typing import Union, Tuple, Dict
 
 from Message import Message
 from Source import Source
+from provider.Clock import Clock
 from provider.Provider import Provider
 from primary.Crontab import find_matching_crontab
 from primary.Display import Display
@@ -17,10 +18,11 @@ SOURCE_OVERRIDE = "OVERRIDE"
 
 
 class SourceHttpd(Source):
-    def __init__(self, wifi: Wifi, display: Display, providers: Dict[str, Provider], port: int = 0):
+    def __init__(self, wifi: Wifi, display: Display, providers: Dict[str, Provider], clock: Clock, port: int = 0):
         self.wifi = wifi
         self.display = display
         self.providers = providers
+        self.clock = clock
         self.default_provider = Provider()
 
         # Trackers for what to display
@@ -57,24 +59,20 @@ class SourceHttpd(Source):
         if 'text' in form_data:
             self.override_message = form_data
             print("[HTTP] Received override message:", form_data)
-            return 200, b'', 'text/html'
-        return 400, b'', 'text/html'
+            return 200, b'', 'text/plain'
+        return 400, b'', 'text/plain'
 
     def process_get_crontab(self, request: str) -> Tuple[int, bytes, str]:
-        try:
-            content = '\n'.join(self.crontab)
-            return 200, content.encode('utf-8'), 'text/plain'
-        except Exception as e:
-            print(f"Error getting crontab: {e}")
-            return 500, b'Error getting crontab', 'text/plain'
+        content = '\n'.join(self.crontab)
+        return 200, content.encode('utf-8'), 'text/plain'
 
     def process_post_crontab(self, request: str) -> Tuple[int, bytes, str]:
         try:
             body = request.decode('utf-8').split('\r\n\r\n', 1)[1]
             with open('crontab.txt', 'w') as f:
                 f.write(body)
-            # Reload the crontab
-            self.crontab = self.load_crontab()
+
+            self.crontab = self.load_crontab() # Reload the crontab
             self.last_crontab_data = None  # Force a refresh of the current message
             return 200, b'Crontab updated', 'text/plain'
         except OSError as e:
@@ -89,8 +87,8 @@ class SourceHttpd(Source):
         return self.display.virtual_to_physical(message), interval_ms
 
     def load_crontab_message(self):
-        current_time = time.localtime()
-        time_tuple = (current_time[4], current_time[3], current_time[2], current_time[1], current_time[6])
+        current_time = self.clock.now()
+        time_tuple = (current_time.minute, current_time.hour, current_time.day, current_time.month, current_time.weekday)
         crontab_data = find_matching_crontab(time_tuple, self.crontab)
 
         if crontab_data and crontab_data != self.last_crontab_data:

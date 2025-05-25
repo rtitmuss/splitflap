@@ -1,7 +1,7 @@
-
 import unittest
 from Message import Message
 from provider.Provider import Provider
+from provider.Clock import Clock
 from primary.SourceHttpd import SourceHttpd, decode_url_encoded
 
 
@@ -21,6 +21,15 @@ class MocKWifi:
         pass
 
 
+class MockClock(Clock):
+    def __init__(self, year=2024, month=1, day=1, hour=0, minute=0, second=0):
+        super().__init__(year, month, day, hour, minute, second)
+
+    @staticmethod
+    def now(timezone: str = None):
+        return MockClock()  # Return a fixed time for testing
+
+
 class MockProvider(Provider):
     def __init__(self, message: Message, interval_ms: Union[int, None]):
         self.message = message
@@ -36,9 +45,10 @@ class SourceHttpdTest(unittest.TestCase):
     def setUp(self):
         self.mock_display = MockDisplay()
         self.mock_provider = MockProvider(Message(15, [0], [0]), 60)
+        self.mock_clock = MockClock()
         self.source_httpd = SourceHttpd(MocKWifi(), self.mock_display, {
             "{MESSAGE}": self.mock_provider,
-        })
+        }, self.mock_clock)
 
     def test_process_post_display(self):
         status = self.source_httpd.process_post_display('POST /display\r\n\r\ntext=foo'.encode('utf-8'))

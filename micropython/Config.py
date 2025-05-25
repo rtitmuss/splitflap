@@ -6,6 +6,9 @@ from provider.ProviderNewYearCountdown import ProviderNewYearCountdown
 from provider.ProviderLetters import ProviderLetters
 from provider.ProviderWordClock import ProviderWordClock
 
+# default timezone for the application
+default_timezone = "Europe/Stockholm"
+
 # element order when displaying alphabet
 # display_order = ['abcdefghij','klmnopqrst']
 display_order = ['vurqnmjifeba',
