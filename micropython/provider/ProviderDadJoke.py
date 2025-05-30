@@ -10,20 +10,27 @@ from provider.Provider import Provider
 _URL = const("https://icanhazdadjoke.com")
 _HEADERS = {"Accept": "text/plain",
             "User-Agent": "Splitflap (https://github.com/rtitmuss/splitflap)"}
+_REQUEST_TIMEOUT = const(10)  # seconds to wait for a response
 
 
 def get_dad_jokes() -> Union[List[str], None]:
-    response = requests.get(_URL, headers=_HEADERS)
-    if response.status_code == 200:
-        jokes = response.text.split('\n')
+    response = None
+    try:
+        response = requests.get(_URL, headers=_HEADERS, timeout=_REQUEST_TIMEOUT)
+        if response.status_code == 200:
+            jokes = response.text.split('\n')
 
-        # filter characters using LETTERS
-        jokes = list(map(lambda joke: ''.join(char for char in joke.upper() if char in LETTERS), jokes))
-    else:
-        jokes = ["Err: " + response.status_code]
-
-    response.close()
-    return jokes
+            # filter characters using LETTERS
+            jokes = list(map(lambda joke: ''.join(char for char in joke.upper() if char in LETTERS), jokes))
+        else:
+            jokes = [f"Err: {response.status_code}"]
+        return jokes
+    except Exception as e:
+        print(f"[DADJOKE] Request error {e}")
+    finally:
+        if response:
+            response.close()
+    return []
 
 
 class ProviderDadJoke(Provider):
