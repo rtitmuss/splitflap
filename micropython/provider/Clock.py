@@ -1,12 +1,18 @@
 import requests
 import time
+import json
+import os
 
 _DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+_TIMEZONE_CACHE_FILE = "timezone_cache.json"
+_TIMEZONE_REQUEST_TIMEOUT = 10  # seconds
+_TIMEZONE_CACHE_MAX_AGE = 6 * 60 * 60  # 6 hours in seconds
+
 
 class Clock:
-    utc_offset_sec = {}
+    timezone_data = {}
 
     def __init__(self, year: int = 1970, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         # use time.mktime / time.localtime to handle under/overflow
@@ -27,23 +33,92 @@ class Clock:
         return Clock(now[0], now[1], now[2], now[3], now[4], now[5])
 
     @staticmethod
-    def timezone(timezone: str):
-        if timezone not in Clock.utc_offset_sec:
-            try:
-                response = requests.get(
-                    'https://timeapi.io/api/TimeZone/zone?timeZone={}'.format(timezone))
+    def _load_timezone_cache():
+        try:
+            with open(_TIMEZONE_CACHE_FILE, 'r') as f:
+                cache_data = json.load(f)
+                Clock.timezone_data = cache_data.get('timezones', {})
+        except OSError:
+            # File does not exist
+            Clock.timezone_data = {}
+        except Exception as e:
+            print(f"[TIMEZONE] Error loading cache: {e}")
+            Clock.timezone_data = {}
 
-                if response.status_code == 200:
-                    data = response.json()
-                    if data and 'currentUtcOffset' in data and 'seconds' in data['currentUtcOffset']:
-                        Clock.utc_offset_sec[timezone] = data['currentUtcOffset']['seconds']
-                if response.status_code == 404:
-                    raise ValueError("Invalid timezone")
+    @staticmethod
+    def _save_timezone_cache():
+        try:
+            cache_data = {'timezones': Clock.timezone_data}
+            with open(_TIMEZONE_CACHE_FILE, 'w') as f:
+                json.dump(cache_data, f)
+        except Exception as e:
+            print(f"[TIMEZONE] Error saving cache: {e}")
 
-            finally:
+    @staticmethod
+    def _fetch_timezone_data(timezone: str):
+        last_updated = time.time()
+
+        # First attempt: timeapi.io
+        response = None
+        try:
+            response = requests.get(
+                'https://timeapi.io/api/TimeZone/zone?timeZone={}'.format(timezone),
+                timeout=_TIMEZONE_REQUEST_TIMEOUT)
+            if response.status_code == 200:
+                data = response.json()
+                if data and 'currentUtcOffset' in data and 'seconds' in data['currentUtcOffset']:
+                    return {
+                        'current_offset': data['currentUtcOffset']['seconds'],
+                        'last_updated': last_updated
+                    }
+            elif response.status_code == 404:
+                raise ValueError("Invalid timezone")
+        except Exception as e:
+            print(f"[TIMEZONE] timeapi.io failed: {e}")
+        finally:
+            if response:
                 response.close()
 
-        offset_sec = Clock.utc_offset_sec.get(timezone, 0)
+        # Second attempt: WorldTimeAPI
+        response = None
+        try:
+            response = requests.get(
+                'http://worldtimeapi.org/api/timezone/{}'.format(timezone),
+                timeout=_TIMEZONE_REQUEST_TIMEOUT)
+            if response.status_code == 200:
+                data = response.json()
+                if 'raw_offset' in data and 'dst_offset' in data:
+                    offset_sec = data['raw_offset'] + data['dst_offset']
+                    return {'current_offset': offset_sec, 'last_updated': last_updated}
+            elif response.status_code == 404:
+                raise ValueError("Invalid timezone")
+        except Exception as e:
+            print(f"[TIMEZONE] WorldTimeAPI failed: {e}")
+        finally:
+            if response:
+                response.close()
+
+        return None
+
+    @staticmethod
+    def timezone(timezone: str):
+        if not Clock.timezone_data:
+            Clock._load_timezone_cache()
+
+        current_time = time.time()
+        timezone_info = Clock.timezone_data.get(timezone)
+
+        # Update cache if data is missing or too old
+        if not timezone_info or (current_time - timezone_info.get('last_updated', 0)) > _TIMEZONE_CACHE_MAX_AGE:
+            timezone_info = Clock._fetch_timezone_data(timezone)
+            if timezone_info:
+                Clock.timezone_data[timezone] = timezone_info
+                Clock._save_timezone_cache()
+
+        if not timezone_info:
+            return Clock
+
+        offset_sec = timezone_info.get('current_offset', 0)
 
         class TimezoneClock(Clock):
             @staticmethod
