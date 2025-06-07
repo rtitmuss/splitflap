@@ -15,8 +15,8 @@ display_order = ['vurqnmjifeba',
                  'xwtspolkhgdc']
 
 # flap offsets in display order for calibration
-display_offsets = [0, 0, -12, -9, -23, 7, 12, 21, 15, 3, -5, -1,
-                   0, 0, 14, -15, -14, -29, 21, -1, -7, -7, -3, 0]
+display_offsets = [11, 5, -12, -8, -21, 4, 18, 17, 11, 5, 0, -3,
+                   -6, 2, 15, -18, -18, -22, 22, -2, -4, -5, 1, 2]
 
 providers = {
     "{CLOCK_STO}": ProviderClock("STO  %H:%M    %d.%m.%Y", "Europe/Stockholm"),
