@@ -110,10 +110,13 @@ class Clock:
 
         # Update cache if data is missing or too old
         if not timezone_info or (current_time - timezone_info.get('last_updated', 0)) > _TIMEZONE_CACHE_MAX_AGE:
-            timezone_info = Clock._fetch_timezone_data(timezone)
-            if timezone_info:
+            fetched_info = Clock._fetch_timezone_data(timezone)
+            if fetched_info:
+                timezone_info = fetched_info
                 Clock.timezone_data[timezone] = timezone_info
                 Clock._save_timezone_cache()
+            else:
+                print(f"[TIMEZONE] Using stale cached data for '{timezone}'")
 
         if not timezone_info:
             return Clock

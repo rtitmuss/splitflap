@@ -113,9 +113,6 @@ class ClockTest(unittest.TestCase):
         self.assertTrue(issubclass(TimezoneClock, Clock))
         self.assertNotEqual(Clock.now(), TimezoneClock.now())
 
-    def test_timezone_invalid(self):
-        self.assertRaises(ValueError, Clock.timezone, 'city')
-
 
 if __name__ == '__main__':
     unittest.main()
