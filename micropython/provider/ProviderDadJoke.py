@@ -13,38 +13,34 @@ _HEADERS = {"Accept": "text/plain",
 _REQUEST_TIMEOUT = const(10)  # seconds to wait for a response
 
 
-def get_dad_jokes() -> Union[List[str], None]:
-    response = None
-    try:
-        response = requests.get(_URL, headers=_HEADERS, timeout=_REQUEST_TIMEOUT)
-        if response.status_code == 200:
-            jokes = response.text.split('\n')
-
-            # filter characters using LETTERS
-            jokes = list(map(lambda joke: ''.join(char for char in joke.upper() if char in LETTERS), jokes))
-        else:
-            jokes = [f"Err: {response.status_code}"]
-        return jokes
-    except Exception as e:
-        print(f"[DADJOKE] Request error {e}")
-    finally:
-        if response:
-            response.close()
-    return []
-
-
 class ProviderDadJoke(Provider):
-    def __init__(self):
+    def __init__(self, requestsFactory=requests):
+        self.requests = requestsFactory
         self.lines = []
-        self.jokes = []
+
+    def get_dad_joke(self) -> Union[str, None]:
+        response = None
+        try:
+            response = self.requests.get(_URL, headers=_HEADERS, timeout=_REQUEST_TIMEOUT)
+            if response.status_code == 200:
+                joke = response.text.replace('\n', ' ').strip()
+
+                # filter characters using LETTERS
+                return ''.join(char for char in joke.upper() if char in LETTERS)
+            else:
+                return f"ERR: {response.status_code}!"
+        except Exception as e:
+            print(f"[DADJOKE] Request error {e}")
+        finally:
+            if response:
+                response.close()
+        return None
 
     def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
         if not self.lines:
-            if not self.jokes:
-                self.jokes = get_dad_jokes()
+            joke = self.get_dad_joke()
+            if joke:
+                self.lines = display.format_string_left_justified(joke)
 
-            if self.jokes:
-                self.lines = display.format_string_left_justified(self.jokes.pop(0))
-
-        joke_word = self.lines.pop(0) if self.lines else ''
-        return joke_word, 14000 if self.lines else None
+        joke_line = self.lines.pop(0) if self.lines else ''
+        return joke_line, 14000 if self.lines else None
