@@ -6,7 +6,12 @@
 # weekday: 0-6 (0=Sunday, 6=Saturday)
 # command: JSON string with display parameters
 
-0 * * * * {"text": "Test on the hour"}
+* 8-14 20 6 * {"text": "glad       midsummar"}
+
+* 22-06 * * * {"text": "GOOD NIGHT         %H:%M", "format": "CLOCK", "timezone": "Europe/Stockholm", "rpm": 8}
+
+30-31 21 * * * {"text": "Dad joke:", "format": "DAD_JOKE", "order": "diagonal_sweep"}
+45-46 21 * * * {"text": "Dad joke:", "format": "DAD_JOKE", "order": "diagonal_sweep"}
 
 # clock every minute
-* * * * * {"text": "{CLOCK_STO} "}
+* * * * * {"text": "STO  %H:%M    %d.%m.%Y", "format": "CLOCK", "timezone": "Europe/Stockholm"}
