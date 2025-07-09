@@ -36,7 +36,7 @@ class ProviderDadJoke(Provider):
                 response.close()
         return None
 
-    def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
+    def get_word(self, args: dict[str, str], display: Display) -> Tuple[str, Union[int, None]]:
         if not self.lines:
             joke = self.get_dad_joke()
             if joke:

@@ -19,11 +19,12 @@ def _days_to_new_year(year: int, month: int, day: int) -> int:
 
 
 class ProviderNewYearCountdown(Provider):
-    def __init__(self, timezone: str, clock_now=None):
-        self.clock_now = clock_now if clock_now else lambda: Clock.timezone(timezone).now()
+    def __init__(self, clock_mock=None):
+        self.clock_mock = clock_mock
 
-    def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
-        now = self.clock_now()
+    def get_word(self, args: dict[str, str], display: Display) -> Tuple[str, Union[int, None]]:
+        timezone = args.get('timezone', 'UTC')
+        now = self.clock_mock() if self.clock_mock else Clock.timezone(timezone).now()
 
         if now.month == 1 and now.day == 1:  # Jan 1st
             return now.strftime("!HAPPY NEW" "YEAR %Y!"), None

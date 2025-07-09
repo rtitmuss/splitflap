@@ -13,7 +13,7 @@ class ProviderLetters(Provider):
     def __init__(self):
         self.lines = []
 
-    def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
+    def get_word(self, args: dict[str, str], display: Display) -> Tuple[str, Union[int, None]]:
         if not self.lines:
             num = display.display_length()
             for letter in reversed(Message.LETTERS):

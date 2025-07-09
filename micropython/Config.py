@@ -19,16 +19,13 @@ display_offsets = [11, 5, -12, -8, -21, 4, 18, 17, 11, 5, 0, -3,
                    -6, 2, 15, -18, -18, -22, 22, -2, -4, -5, 1, 2]
 
 providers = {
-    "{CLOCK_STO}": ProviderClock("STO  %H:%M    %d.%m.%Y", "Europe/Stockholm"),
-    "{CLOCK_ADL}": ProviderClock("ADL  %H:%M    %d.%m.%Y", "Australia/Adelaide"),
-    "{CLOCK_NYC}": ProviderClock("NYC  %H:%M    %d.%m.%Y", "America/New_York"),
-    "{WORD_CLOCK_STO_EN}": ProviderWordClock("en", "Europe/Stockholm"),
-    "{WORD_CLOCK_STO_SV}": ProviderWordClock("sv", "Europe/Stockholm"),
-    "{NEW_YEAR_STO}": ProviderNewYearCountdown("Europe/Stockholm"),
-    "{ART}": ProviderArt(),
-    "{MOTION}": ProviderMotion(),
-    "{DAD_JOKE}": ProviderDadJoke(),
-    "{LETTERS}": ProviderLetters(),
+    'CLOCK': ProviderClock(),
+    'DAD_JOKE': ProviderDadJoke(),
+    'WORD_CLOCK': ProviderWordClock(),
+    'NEW_YEAR': ProviderNewYearCountdown(),
+    'ART': ProviderArt(),
+    'MOTION': ProviderMotion(),
+    'ALL_LETTERS': ProviderLetters(),
 }
 
 _alphabet = 'abcdefghijklmnopqrstuvwxyz'

@@ -1,7 +1,7 @@
 import time
 import json
 
-from typing import Union, Tuple, Dict
+from typing import Union, Tuple, Dict, List
 
 from Message import Message
 from Source import Source
@@ -77,11 +77,12 @@ class SourceHttpd(Source):
             print(f"Error writing crontab: {e}")
             return 500, b'Error writing crontab', 'text/plain'
 
-    def display_data_to_message(self, display_data: Dict[str, str], physical_motor_position: [int]) -> Tuple[Message, int]:
+    def display_data_to_message(self, args: Dict[str, str], physical_motor_position: List[int]) -> Tuple['Message', int]:
         motor_pos = self.display.physical_to_virtual(physical_motor_position)
-        text = display_data['text'].upper()
-        provider = self.providers.get(text, self.default_provider)
-        message, interval_ms = provider.get_message(text, display_data, self.display, motor_pos)
+        provider_name = args.get('format', '')
+        provider = self.providers.get(provider_name, self.default_provider)
+
+        message, interval_ms = provider.get_message(args, self.display, motor_pos)
         return self.display.virtual_to_physical(message), interval_ms
 
     def load_crontab_message(self):

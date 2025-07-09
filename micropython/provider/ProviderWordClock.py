@@ -75,22 +75,25 @@ def remove_diacritics(text: str) -> str:
 
 
 class ProviderWordClock(Provider):
-    def __init__(self, lang: str = "en", timezone: str = None, clock_now: Callable = None):
-        self.clock_now = clock_now if clock_now else lambda: Clock.timezone(timezone).now()
-        self.hour_strings = HOUR_STRINGS[lang]
-        self.min_strings = MINUTE_STRINGS[lang]
+    def __init__(self, clock_mock: Callable = None):
+        self.clock_mock = clock_mock
 
-    def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
-        clock = self.clock_now()
+    def get_word(self, args: dict[str, str], display: Display) -> Tuple[str, Union[int, None]]:
+        lang = args.get('lang', 'en')
+        timezone = args.get('timezone', 'UTC')
+        now = self.clock_mock() if self.clock_mock else Clock.timezone(timezone).now()
 
-        next_5_minute = (clock.minute // 5 + 1) * 5
-        remaining_minutes = next_5_minute - clock.minute
-        remaining_seconds = remaining_minutes * 60 - clock.second
+        hour_strings = HOUR_STRINGS[lang]
+        min_strings = MINUTE_STRINGS[lang]
+
+        next_5_minute = (now.minute // 5 + 1) * 5
+        remaining_minutes = next_5_minute - now.minute
+        remaining_seconds = remaining_minutes * 60 - now.second
         next_interval_ms = remaining_seconds * 1000
 
-        this_hour = self.hour_strings[clock.hour % 12]
-        next_hour = self.hour_strings[(clock.hour + 1) % 12]
-        word_clock = self.min_strings[clock.minute // 5].format(this_hour=this_hour, next_hour=next_hour)
+        this_hour = hour_strings[now.hour % 12]
+        next_hour = hour_strings[(now.hour + 1) % 12]
+        word_clock = min_strings[now.minute // 5].format(this_hour=this_hour, next_hour=next_hour)
         word_clock = remove_diacritics(word_clock)
 
         return display.format_string_left_justified(word_clock)[0], next_interval_ms

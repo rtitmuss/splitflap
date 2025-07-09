@@ -5,13 +5,15 @@ from primary.Display import Display
 
 
 class Provider:
-    def get_message(self, display_word: str, display_data: Dict[str, str], display: Display, motor_position: [int])\
+    def get_message(self, args: Dict[str, str], display: Display, motor_position: [int])\
             -> Tuple[Message, Union[int, None]]:
-        rpm = int(display_data.get('rpm', 15))
-        order = display_data.get('order', None)
+        rpm = int(args.get('rpm', 15))
+        order = args.get('order', None)
 
-        word, interval_ms = self.get_word(display_word, display)
-        display_word = display.adjust_word(word)
+        word, interval_ms = self.get_word(args, display)
+        # filter characters using LETTERS
+        clean_word = ''.join(char for char in word.upper() if char in LETTERS)
+        display_word = display.adjust_word(clean_word)
         print('word: \'{}\' rpm: {}'.format(display_word, rpm))
 
         if order == "random":
@@ -27,8 +29,5 @@ class Provider:
 
         return message, interval_ms
 
-    def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
-        # filter characters using LETTERS
-        clean_word = ''.join(char for char in word if char in LETTERS)
-        interval_ms = None
-        return clean_word, interval_ms
+    def get_word(self, args: Dict[str, str], display: Display) -> Tuple[str, Union[int, None]]:
+        return args.get('text', ''), None

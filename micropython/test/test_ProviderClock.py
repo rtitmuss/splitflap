@@ -11,10 +11,10 @@ class DisplayMock:
 class PythonClockTest(unittest.TestCase):
     def setUp(self):
         self.display = DisplayMock()
-        self.provider = ProviderClock("%H.%M", "UTC")
+        self.provider = ProviderClock()
 
     def test_get_word(self):
-        word, interval_ms = self.provider.get_word(None, self.display)
+        word, interval_ms = self.provider.get_word({"text": "%H.%M", "timezone": "UTC"}, self.display)
         self.assertIsInstance(word, str)
         self.assertIsInstance(interval_ms, int)
 

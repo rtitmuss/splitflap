@@ -15,7 +15,7 @@ class PythonArtTest(unittest.TestCase):
         self.provider = ProviderMotion()
 
     def test_get_message(self):
-        message, interval_ms = self.provider.get_message(None, {"rpm":"15"}, self.display, [0, 0, 0, 0])
+        message, interval_ms = self.provider.get_message({"rpm":"15"}, self.display, [0, 0, 0, 0])
         self.assertIsInstance(message, Message)
         self.assertEqual(interval_ms, 1)
 

@@ -6,7 +6,7 @@ from provider.Provider import Provider
 
 
 class ProviderArt(Provider):
-    def get_word(self, word: str, display: Display) -> Tuple[str, Union[int, None]]:
+    def get_word(self, args: dict[str, str], display: Display) -> Tuple[str, Union[int, None]]:
         display_len = display.display_length()
         pattern = []
         for i in range(display_len):
