@@ -41,6 +41,8 @@ class ProviderDadJoke(Provider):
             joke = self.get_dad_joke()
             if joke:
                 self.lines = display.format_string_left_justified(joke)
+            if "text" in args:
+                self.lines.insert(0, args["text"].upper())
 
         joke_line = self.lines.pop(0) if self.lines else ''
         return joke_line, 14000 if self.lines else None

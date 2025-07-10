@@ -47,6 +47,17 @@ class TestProviderDadJoke(unittest.TestCase):
         self.assertEqual(word, "NOTES? SCRATCH PAPER!")
         self.assertIsNone(interval_ms)
 
+    def test_get_word_with_text(self):
+        text = "test joke"
+        provider = ProviderDadJoke(requestsFactory=RequestsMock(200, text))
+        word, interval_ms = provider.get_word({"text": "dad joke:"}, self.mockDisplay)
+        self.assertEqual(word, "DAD JOKE:")
+        self.assertEqual(interval_ms, 14000)
+
+        word, interval_ms = provider.get_word('', self.mockDisplay)
+        self.assertEqual(word, "TEST JOKE")
+        self.assertIsNone(interval_ms)
+
     def test_http_error_response(self):
         provider = ProviderDadJoke(requestsFactory=RequestsMock(404, "Not found"))
         word, interval_ms = provider.get_word('', self.mockDisplay)
