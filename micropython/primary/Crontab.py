@@ -1,3 +1,8 @@
+import re
+
+CRONTAB_REGEX = re.compile(r'^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)$')
+
+
 def expand_field(field, min_val, max_val):
     """Expands a crontab field to a list of valid values."""
     values = set()
@@ -32,13 +37,12 @@ def expand_field(field, min_val, max_val):
 
 def parse_crontab_line(line):
     """Parses a crontab line into a list of lists containing valid time values and extracts the command."""
-    parts = line.split()  # MicroPython doesn't support maxsplit, so we split everything
+    match = CRONTAB_REGEX.match(line)
+    if not match:
+        raise ValueError("Invalid crontab line format")
 
-    if len(parts) < 6:
-        raise ValueError("Invalid crontab line format (missing command)")
-
-    fields = parts[:5]  # First 5 fields are the crontab schedule
-    command = " ".join(parts[5:])  # The rest is the command
+    fields = [match.group(1), match.group(2), match.group(3), match.group(4), match.group(5)]
+    command = match.group(6)  # Preserve all spaces in the command
 
     return [
         expand_field(fields[0], 0, 59),  # Minutes
