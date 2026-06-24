@@ -1,4 +1,3 @@
-import requests
 from micropython import const
 
 import Message

@@ -1,5 +1,6 @@
-from typing import Callable, Union, Tuple
+from typing import Union, Tuple
 
+from primary.Display import Display
 from provider.Clock import Clock
 from provider.Provider import Provider
 
