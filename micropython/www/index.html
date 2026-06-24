@@ -9,8 +9,8 @@
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
-      background: #fff;
-      color: #202124;
+      background: #1a1a1a;
+      color: #e0e0e0;
     }
     body {
       display: flex;
@@ -19,6 +19,7 @@
     }
     .content-container {
       width: 90%;
+      max-width: 640px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -28,16 +29,65 @@
       font-style: normal;
       font-weight: 200;
       font-size: 48px;
-      background-color: black;
-      color: white;
+      background-color: #111;
+      color: #f0c040;
       letter-spacing: 2px;
-      margin: 5px 0;
-      padding: 5px;
+      margin: 10px 0;
+      padding: 5px 10px;
     }
+    #status-display {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 10px 0;
+      padding: 12px;
+      background: #111;
+      border-radius: 6px;
+      border: 1px solid #333;
+    }
+    .flap-row {
+      display: flex;
+      justify-content: center;
+      gap: 3px;
+      margin: 2px 0;
+    }
+    .flap {
+      width: 28px;
+      height: 36px;
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      font-size: 20px;
+      font-weight: bold;
+      color: #f0c040;
+    }
+    .status-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #666;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #222;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .status-dot.on { background: #4a4; }
+    .status-dot.off { background: #a44; }
     #form {
-      background-color: #EDEDED;
+      background-color: #252525;
       padding: 10px;
       border-radius: 5px;
+      border: 1px solid #333;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -48,7 +98,7 @@
       display: flex;
       justify-content: center;
       gap: 10px;
-      flex-wrap: wrap; /* wrap on small screens */
+      flex-wrap: wrap;
       margin: 5px 0;
     }
     #form input[type="text"],
@@ -56,84 +106,87 @@
     #form button {
       font-size: 16px;
       padding: 8px 10px;
-      border: 1px solid #ccc;
+      border: 1px solid #444;
       border-radius: 4px;
+      background: #333;
+      color: #e0e0e0;
+    }
+    #form input[type="text"]::placeholder {
+      color: #777;
     }
     #form button {
-      background-color: #f8f9fa;
-      border: 1px solid #dadce0;
+      background-color: #383838;
+      border: 1px solid #555;
       cursor: pointer;
     }
     #form button:hover {
-      background-color: #e8e9ea;
-    }
-    #errorMessage {
-      color: #d93025;
-      font-size: 14px;
-      margin-top: 8px;
+      background-color: #444;
     }
     #preset-container {
-      margin-top: 30px;
+      margin-top: 20px;
       font-size: 14px;
       text-align: center;
+      line-height: 2;
     }
     #preset-container a {
       margin: 0 5px;
-      color: #1a0dab;
+      color: #f0c040;
       text-decoration: none;
     }
     #preset-container a:hover {
       text-decoration: underline;
     }
     .crontab-section {
-      margin-top: 40px;
-      padding: 20px;
-      background: #f1f3f4;
+      margin-top: 30px;
+      padding: 16px;
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 5px;
       width: 100%;
       box-sizing: border-box;
     }
     .crontab-section h2 {
       margin: 0 0 10px;
       font-weight: normal;
-      font-size: 18px;
-      color: #202124;
+      font-size: 16px;
+      color: #aaa;
     }
     #crontabEditor {
       width: 100%;
       height: 200px;
       font-family: monospace;
-      border: 1px solid #dcdcdc;
+      font-size: 13px;
+      border: 1px solid #444;
       border-radius: 4px;
       padding: 8px;
       box-sizing: border-box;
       resize: vertical;
+      background: #1a1a1a;
+      color: #e0e0e0;
     }
-    #saveCrontab {
-      background-color: #f8f9fa;
-      border: 1px solid #dadce0;
+    .crontab-section button {
+      background-color: #383838;
+      color: #e0e0e0;
+      border: 1px solid #555;
       border-radius: 4px;
       padding: 8px 16px;
       font-size: 14px;
       margin-top: 10px;
       cursor: pointer;
     }
-    #saveCrontab:hover {
-      background-color: #e8e9ea;
+    .crontab-section button:hover {
+      background-color: #444;
     }
-    .status {
+    .toast {
       margin-top: 10px;
       padding: 8px;
       border-radius: 4px;
       display: none;
       font-size: 14px;
     }
-    .success {
-      background-color: #dff0d8;
-      color: #3c763d;
-    }
-    .error {
-      background-color: #fce8e6;
-      color: #d93025;
+    .toast.error {
+      background-color: #3a1a1a;
+      color: #e55;
     }
   </style>
   <script>
@@ -162,7 +215,7 @@
           throw new Error('Failed to send message');
         }
       } catch (error) {
-        showStatus('Error: ' + error, 'goStatus');
+        showToast('Error: ' + error, 'goToast');
       }
     }
     async function fillWithRandomWords() {
@@ -196,16 +249,58 @@
           throw new Error('Failed to send message');
         }
       } catch (error) {
-        showStatus('Error: ' + error, 'goStatus');
+        showToast('Error: ' + error, 'goToast');
       }
     }
+    function formatUptime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+    }
+    function formatMemory(bytes) {
+      return Math.round(bytes / 1024) + 'KB';
+    }
+    function renderFlaps(status) {
+      const container = document.getElementById('flap-container');
+      const rows = status.rows || 2;
+      const cols = status.cols || 12;
+      const text = (status.data && status.data.text) || '';
+      const format = (status.data && status.data.format) || '';
+      const label = format || text;
+      const padded = label.toUpperCase().padEnd(rows * cols).slice(0, rows * cols);
+      let html = '';
+      for (let r = 0; r < rows; r++) {
+        html += '<div class="flap-row">';
+        for (let c = 0; c < cols; c++) {
+          const ch = padded[r * cols + c];
+          html += '<div class="flap">' + (ch === ' ' ? '&nbsp;' : ch.replace(/</g, '&lt;')) + '</div>';
+        }
+        html += '</div>';
+      }
+      container.innerHTML = html;
+    }
+    function updateStatus() {
+      fetch('/status')
+        .then(r => r.json())
+        .then(status => {
+          renderFlaps(status);
+          const dot = document.getElementById('wifi-dot');
+          dot.className = 'status-dot ' + (status.wifi ? 'on' : 'off');
+          document.getElementById('status-source').textContent = status.source;
+          document.getElementById('status-uptime').textContent = formatUptime(status.uptime);
+          document.getElementById('status-mem').textContent = formatMemory(status.mem_free);
+        })
+        .catch(() => {});
+    }
+    updateStatus();
+    setInterval(updateStatus, 5000);
     fetch('/crontab')
       .then(response => response.text())
       .then(text => {
         document.getElementById('crontabEditor').value = text;
       })
       .catch(error => {
-        showStatus('Error loading crontab: ' + error, true);
+        showToast('Error loading crontab: ' + error, 'crontabToast');
       });
     async function submitCrontabForm() {
       fetch('/crontab', {
@@ -218,22 +313,29 @@
         }
       })
       .catch(error => {
-        showStatus('Error saving crontab: ' + error, 'crontabStatus');
+        showToast('Error saving crontab: ' + error, 'crontabToast');
       });
     }
-    function showStatus(message, elementId) {
-      const status = document.getElementById(elementId);
-      status.textContent = message;
-      status.className = 'status error';
-      status.style.display = 'block';
-      setTimeout(() => { status.style.display = 'none'; }, 3000);
+    function showToast(message, elementId) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.className = 'toast error';
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
     }
   </script>
 </head>
 <body>
   <div id="title">&nbsp;SPLIT FLAP&nbsp;</div>
-  <p>
   <div class="content-container">
+    <div id="status-display">
+      <div id="flap-container"></div>
+      <div class="status-info">
+        <span><span id="wifi-dot" class="status-dot off"></span> <span id="status-source">--</span></span>
+        <span id="status-uptime">--</span>
+        <span id="status-mem">--</span>
+      </div>
+    </div>
     <form id="form" method="post" action="/display">
       <div class="form-row">
           <input type="text" id="text_input" name="text" maxlength="100" placeholder="Enter up to 24 letters">
@@ -254,7 +356,7 @@
         <button type="button" onclick="submitGoForm()">Go</button>
         <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
       </div>
-      <div id="goStatus" class="status"></div>
+      <div id="goToast" class="toast"></div>
     </form>
     <div id="preset-container">
       Clock
@@ -273,11 +375,11 @@
       <a href="#" onclick="preset({format:'ALL_LETTERS'}, 'end_in_sync')">All</a>
     </div>
     <div class="crontab-section">
-      <h2>Crontab Editor</h2>
+      <h2>Crontab</h2>
       <textarea id="crontabEditor" placeholder="Loading crontab..."></textarea>
       <br>
-      <button type="button" onclick="submitCrontabForm()">Save Crontab</button>
-      <div id="crontabStatus" class="status"></div>
+      <button type="button" onclick="submitCrontabForm()">Save</button>
+      <div id="crontabToast" class="toast"></div>
     </div>
   </div>
 </body>

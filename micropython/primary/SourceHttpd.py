@@ -1,3 +1,4 @@
+import gc
 import time
 import json
 
@@ -24,6 +25,7 @@ class SourceHttpd(Source):
         self.providers = providers
         self.clock = clock
         self.default_provider = Provider()
+        self.start_ticks = time.ticks_ms()
 
         # Trackers for what to display
         self.current_data = None
@@ -42,6 +44,7 @@ class SourceHttpd(Source):
         # HTTP server
         self.httpd = Httpd({
             "POST /display": lambda url, body: self.process_post_display(body),
+            "GET /status": lambda url, body: self.process_get_status(),
             "GET /crontab": lambda url, body: self.process_get_crontab(),
             "POST /crontab": lambda url, body: self.process_post_crontab(body),
         }, port)
@@ -60,6 +63,19 @@ class SourceHttpd(Source):
             print("[HTTP] Received override message:", form_data)
             return 200, b'', 'text/plain'
         return 400, b'', 'text/plain'
+
+    def process_get_status(self) -> Tuple[int, bytes, str]:
+        uptime_s = time.ticks_diff(time.ticks_ms(), self.start_ticks) // 1000
+        status = {
+            "source": self.current_source,
+            "data": self.current_data,
+            "rows": self.display.rows,
+            "cols": self.display.cols,
+            "mem_free": gc.mem_free(),
+            "uptime": uptime_s,
+            "wifi": self.wifi.is_connected,
+        }
+        return 200, json.dumps(status).encode('utf-8'), 'application/json'
 
     def process_get_crontab(self) -> Tuple[int, bytes, str]:
         content = '\n'.join(self.crontab)
