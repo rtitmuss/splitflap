@@ -2,19 +2,19 @@ import unittest
 from primary.Httpd import Httpd, decode_url_encoded
 
 
-def raise_error():
+def raise_error(url, body):
     raise ValueError
 
 
-class SourceHttpdTest(unittest.TestCase):
+class HttpdTest(unittest.TestCase):
     def setUp(self):
         self.get_data_called = False
         self.display_post_called = False
 
         self.httpd = Httpd({
-            "GET /data": lambda request: setattr(self, "get_data_called", True) or (200, b'data', 'text/html'),
-            "POST /display": lambda request: setattr(self, "display_post_called", True) or (200, b'', 'text/html'),
-            "POST /error": lambda request: raise_error(),
+            "GET /data": lambda url, body: setattr(self, "get_data_called", True) or (200, b'data', 'text/html'),
+            "POST /display": lambda url, body: setattr(self, "display_post_called", True) or (200, b'', 'text/html'),
+            "POST /error": raise_error,
         })
 
     def test_decode_url_encoded_basic_pairs(self):
@@ -42,36 +42,36 @@ class SourceHttpdTest(unittest.TestCase):
                          {'name': 'Smith'})
 
     def test_process_http_request_post_display(self):
-        response = self.httpd.process_http_request('POST /display HTTP/1.1\r\n\r\ntext=foo'.encode('utf-8'))
-        self.assertTrue(response.startswith("HTTP/1.1 200"))
+        response = self.httpd.process_http_request('POST', '/display', b'text=foo')
+        self.assertTrue(response.startswith(b"HTTP/1.1 200"))
         self.assertTrue(self.display_post_called)
 
     def test_process_http_request_get_index_html(self):
-        response = self.httpd.process_http_request('GET / HTTP/1.1\r\n\r\n'.encode('utf-8'))
-        self.assertTrue(response.startswith("HTTP/1.1 200"))
-        self.assertTrue("text/html".encode('utf-8') in response)
+        response = self.httpd.process_http_request('GET', '/', b'')
+        self.assertTrue(response.startswith(b"HTTP/1.1 200"))
+        self.assertTrue(b"text/html" in response)
 
     def test_process_http_request_get_favicon_ico(self):
-        response = self.httpd.process_http_request('GET /favicon.ico HTTP/1.1\r\n\r\n'.encode('utf-8'))
-        self.assertTrue(response.startswith("HTTP/1.1 200"))
-        self.assertTrue("image/vnd.microsoft.icon".encode('utf-8') in response)
+        response = self.httpd.process_http_request('GET', '/favicon.ico', b'')
+        self.assertTrue(response.startswith(b"HTTP/1.1 200"))
+        self.assertTrue(b"image/vnd.microsoft.icon" in response)
 
     def test_process_http_request_get_data(self):
-        response = self.httpd.process_http_request('GET /data HTTP/1.1\r\n\r\n'.encode('utf-8'))
-        self.assertTrue(response.startswith("HTTP/1.1 200"))
-        self.assertTrue(response.endswith("data"))
+        response = self.httpd.process_http_request('GET', '/data', b'')
+        self.assertTrue(response.startswith(b"HTTP/1.1 200"))
+        self.assertTrue(response.endswith(b"data"))
 
     def test_process_http_request_bad_request(self):
-        response = self.httpd.process_http_request('PUT /\r\n\r\n'.encode('utf-8'))
-        self.assertTrue(response.startswith("HTTP/1.1 400"))
+        response = self.httpd.process_http_request('PUT', '/', b'')
+        self.assertTrue(response.startswith(b"HTTP/1.1 400"))
 
     def test_process_http_request_not_found(self):
-        response = self.httpd.process_http_request('GET /missing.html\r\n\r\n'.encode('utf-8'))
-        self.assertTrue(response.startswith("HTTP/1.1 404"))
+        response = self.httpd.process_http_request('GET', '/missing.html', b'')
+        self.assertTrue(response.startswith(b"HTTP/1.1 404"))
 
     def test_process_http_request_server_error(self):
-        response = self.httpd.process_http_request('POST /error\r\n\r\n'.encode('utf-8'))
-        self.assertTrue(response.startswith("HTTP/1.1 500"))
+        with self.assertRaises(ValueError):
+            self.httpd.process_http_request('POST', '/error', b'')
 
 
 if __name__ == '__main__':
