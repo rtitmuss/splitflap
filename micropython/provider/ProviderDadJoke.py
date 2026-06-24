@@ -1,3 +1,4 @@
+import gc
 import requests
 from micropython import const
 
@@ -11,6 +12,7 @@ _URL = const("https://icanhazdadjoke.com")
 _HEADERS = {"Accept": "text/plain",
             "User-Agent": "Splitflap (https://github.com/rtitmuss/splitflap)"}
 _REQUEST_TIMEOUT = const(10)  # seconds to wait for a response
+_MAX_RETRIES = const(3)
 
 
 class ProviderDadJoke(Provider):
@@ -19,21 +21,23 @@ class ProviderDadJoke(Provider):
         self.lines = []
 
     def get_dad_joke(self) -> Union[str, None]:
-        response = None
-        try:
-            response = self.requests.get(_URL, headers=_HEADERS, timeout=_REQUEST_TIMEOUT)
-            if response.status_code == 200:
-                joke = response.text.replace('\n', ' ').strip()
+        for attempt in range(_MAX_RETRIES):
+            response = None
+            try:
+                gc.collect()
+                response = self.requests.get(_URL, headers=_HEADERS, timeout=_REQUEST_TIMEOUT)
+                if response.status_code == 200:
+                    joke = response.text.replace('\n', ' ').strip()
 
-                # filter characters using LETTERS
-                return ''.join(char for char in joke.upper() if char in LETTERS)
-            else:
-                return f"ERR: {response.status_code}!"
-        except Exception as e:
-            print(f"[DADJOKE] Request error {e}")
-        finally:
-            if response:
-                response.close()
+                    # filter characters using LETTERS
+                    return ''.join(char for char in joke.upper() if char in LETTERS)
+                else:
+                    return f"ERR: {response.status_code}!"
+            except Exception as e:
+                print(f"[DADJOKE] Request error (attempt {attempt + 1}/{_MAX_RETRIES}): {e}")
+            finally:
+                if response:
+                    response.close()
         return None
 
     def get_word(self, args: dict[str, str], display: Display) -> Tuple[str, Union[int, None]]:

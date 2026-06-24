@@ -39,11 +39,11 @@ class TestProviderDadJoke(unittest.TestCase):
     def test_get_word_success(self):
         text = "\nWhere do cats write notes?\nScratch Paper!"
         provider = ProviderDadJoke(requestsFactory=RequestsMock(200, text))
-        word, interval_ms = provider.get_word('', self.mockDisplay)
+        word, interval_ms = provider.get_word({}, self.mockDisplay)
         self.assertEqual(word, "WHERE DO CATS WRITE ")
         self.assertEqual(interval_ms, 14000)
 
-        word, interval_ms = provider.get_word('', self.mockDisplay)
+        word, interval_ms = provider.get_word({}, self.mockDisplay)
         self.assertEqual(word, "NOTES? SCRATCH PAPER!")
         self.assertIsNone(interval_ms)
 
@@ -54,35 +54,58 @@ class TestProviderDadJoke(unittest.TestCase):
         self.assertEqual(word, "DAD JOKE:")
         self.assertEqual(interval_ms, 14000)
 
-        word, interval_ms = provider.get_word('', self.mockDisplay)
+        word, interval_ms = provider.get_word({}, self.mockDisplay)
         self.assertEqual(word, "TEST JOKE")
         self.assertIsNone(interval_ms)
 
     def test_http_error_response(self):
         provider = ProviderDadJoke(requestsFactory=RequestsMock(404, "Not found"))
-        word, interval_ms = provider.get_word('', self.mockDisplay)
+        word, interval_ms = provider.get_word({}, self.mockDisplay)
         self.assertEqual(word, "ERR: 404!")
         self.assertIsNone(interval_ms)
 
     def test_network_exception(self):
         class RequestsMockException:
-            def get(self, url, headers, timeout):
-                raise Exception("Network down")
+            def __init__(self):
+                self.attempt_count = 0
 
-        provider = ProviderDadJoke(requestsFactory=RequestsMockException())
-        word, interval_ms = provider.get_word('', self.mockDisplay)
+            def get(self, url, headers, timeout):
+                self.attempt_count += 1
+                raise OSError(-29312, 'MBEDTLS_ERR_SSL_CONN_EOF')
+
+        mock = RequestsMockException()
+        provider = ProviderDadJoke(requestsFactory=mock)
+        word, interval_ms = provider.get_word({}, self.mockDisplay)
         self.assertEqual(word, "")
         self.assertIsNone(interval_ms)
+        self.assertEqual(mock.attempt_count, 3)
+
+    def test_retry_then_succeed(self):
+        class RequestsMockRetry:
+            def __init__(self):
+                self.attempt_count = 0
+
+            def get(self, url, headers, timeout):
+                self.attempt_count += 1
+                if self.attempt_count < 3:
+                    raise OSError(-29312, 'MBEDTLS_ERR_SSL_CONN_EOF')
+                return MockResponse(200, "Why did the chicken cross the road?")
+
+        mock = RequestsMockRetry()
+        provider = ProviderDadJoke(requestsFactory=mock)
+        joke = provider.get_dad_joke()
+        self.assertEqual(joke, "WHY DID THE CHICKEN CROSS THE ROAD?")
+        self.assertEqual(mock.attempt_count, 3)
 
     def test_empty_or_whitespace_joke(self):
         provider = ProviderDadJoke(requestsFactory=RequestsMock(200, "\n   \n  "))
-        word, interval_ms = provider.get_word('', self.mockDisplay)
+        word, interval_ms = provider.get_word({}, self.mockDisplay)
         self.assertEqual(word, "")
         self.assertIsNone(interval_ms)
 
     def test_joke_with_no_valid_characters(self):
         provider = ProviderDadJoke(requestsFactory=RequestsMock(200, "@%^*()"))
-        word, interval_ms = provider.get_word('', self.mockDisplay)
+        word, interval_ms = provider.get_word({}, self.mockDisplay)
         self.assertEqual(word, "")
         self.assertIsNone(interval_ms)
 
