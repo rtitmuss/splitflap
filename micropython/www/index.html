@@ -182,12 +182,22 @@
       textInput.value = words.join(' ');
       submitGoForm();
     }
-    async function preset(text_preset, order_preset) {
-      const textInput = document.getElementById("text_input");
+    async function preset(params, order_preset) {
       const orderInput = document.getElementById("order_input");
-      textInput.value = text_preset;
+      const rpmInput = document.getElementById("rpm_input");
       orderInput.value = order_preset;
-      submitGoForm();
+      const data = { order: order_preset, rpm: rpmInput.value, ...params };
+      try {
+        const response = await fetchWithTimeout('/display', {
+          method: "post",
+          body: new URLSearchParams(data)
+        });
+        if (!response.ok) {
+          throw new Error('Failed to send message');
+        }
+      } catch (error) {
+        showStatus('Error: ' + error, 'goStatus');
+      }
     }
     fetch('/crontab')
       .then(response => response.text())
@@ -226,7 +236,7 @@
   <div class="content-container">
     <form id="form" method="post" action="/display">
       <div class="form-row">
-          <input type="text" id="text_input" name="text" maxlength="20" placeholder="Enter up to 24 letters">
+          <input type="text" id="text_input" name="text" maxlength="100" placeholder="Enter up to 24 letters">
           <select id="order_input" name="order" required>
             <option value="start_in_sync">|&gt;</option>
             <option value="end_in_sync">&gt;|</option>
@@ -248,19 +258,19 @@
     </form>
     <div id="preset-container">
       Clock
-      <a href="#" onclick="preset('{clock_sto}', 'start_in_sync')">STO</a>
-      <a href="#" onclick="preset('{clock_adl}', 'start_in_sync')">ADL</a>
-      <a href="#" onclick="preset('{clock_nyc}', 'start_in_sync')">NYC</a><br/>
+      <a href="#" onclick="preset({format:'CLOCK',text:'STO  %H:%M    %d.%m.%Y',timezone:'Europe/Stockholm'}, 'start_in_sync')">STO</a>
+      <a href="#" onclick="preset({format:'CLOCK',text:'ADL  %H:%M    %d.%m.%Y',timezone:'Australia/Adelaide'}, 'start_in_sync')">ADL</a>
+      <a href="#" onclick="preset({format:'CLOCK',text:'NYC  %H:%M    %d.%m.%Y',timezone:'America/New_York'}, 'start_in_sync')">NYC</a><br/>
       Word Clock
-      <a href="#" onclick="preset('{word_clock_sto_en}', 'end_in_sync')">STO English</a>
-      <a href="#" onclick="preset('{word_clock_sto_sv}', 'end_in_sync')">STO Svenska</a><br/>
-      <a href="#" onclick="preset('{new_year_sto}', 'start_in_sync')">NYE Countdown</a><br/>
-      <a href="#" onclick="preset('{art}', 'end_in_sync')">Art</a><br/>
-      <a href="#" onclick="preset('{motion}', 'start_in_sync')">Motion</a><br/>
-      <a href="#" onclick="preset('{dad_joke}', 'end_in_sync')">Dad Joke</a><br/>
-      <a href="#" onclick="preset('aaaaaaaaaaaaaaaaaaaaaaaa', 'end_in_sync')">As</a>
-      <a href="#" onclick="preset('zzzzzzzzzzzzzzzzzzzzzzzz', 'end_in_sync')">Zs</a>
-      <a href="#" onclick="preset('{letters}', 'end_in_sync')">All</a>
+      <a href="#" onclick="preset({format:'WORD_CLOCK',lang:'en',timezone:'Europe/Stockholm'}, 'end_in_sync')">STO English</a>
+      <a href="#" onclick="preset({format:'WORD_CLOCK',lang:'sv',timezone:'Europe/Stockholm'}, 'end_in_sync')">STO Svenska</a><br/>
+      <a href="#" onclick="preset({format:'NEW_YEAR',timezone:'Europe/Stockholm'}, 'start_in_sync')">NYE Countdown</a><br/>
+      <a href="#" onclick="preset({format:'ART'}, 'end_in_sync')">Art</a><br/>
+      <a href="#" onclick="preset({format:'MOTION'}, 'start_in_sync')">Motion</a><br/>
+      <a href="#" onclick="preset({format:'DAD_JOKE',text:'Dad joke:'}, 'end_in_sync')">Dad Joke</a><br/>
+      <a href="#" onclick="preset({text:'aaaaaaaaaaaaaaaaaaaaaaaa'}, 'end_in_sync')">As</a>
+      <a href="#" onclick="preset({text:'zzzzzzzzzzzzzzzzzzzzzzzz'}, 'end_in_sync')">Zs</a>
+      <a href="#" onclick="preset({format:'ALL_LETTERS'}, 'end_in_sync')">All</a>
     </div>
     <div class="crontab-section">
       <h2>Crontab Editor</h2>

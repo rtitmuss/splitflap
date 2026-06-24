@@ -55,7 +55,7 @@ class SourceHttpd(Source):
 
     def process_post_display(self, body: bytes) -> Tuple[int, bytes, str]:
         form_data = decode_url_encoded(body.decode('utf-8'))
-        if 'text' in form_data:
+        if 'text' in form_data or 'format' in form_data:
             self.override_message = form_data
             print("[HTTP] Received override message:", form_data)
             return 200, b'', 'text/plain'
@@ -135,7 +135,7 @@ class SourceHttpd(Source):
 
         if self.current_data and self.scheduled_time and time.ticks_diff(time.ticks_ms(), self.scheduled_time) >= 0:
             message, interval = self.display_data_to_message(self.current_data, physical_motor_position)
-            print(f"[{self.current_source}] Text: {self.current_data['text']}, Next in: {interval or 0}ms")
+            print(f"[{self.current_source}] Data: {self.current_data}, Next in: {interval or 0}ms")
             self.scheduled_time = time.ticks_add(time.ticks_ms(), interval) if interval else None
 
             if self.current_source == SOURCE_OVERRIDE:
