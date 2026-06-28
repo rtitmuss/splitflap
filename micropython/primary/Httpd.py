@@ -3,6 +3,7 @@ from collections import OrderedDict
 from typing import Callable, Tuple
 
 from micropython import const
+import gc
 import select
 import socket
 
@@ -71,15 +72,17 @@ def parse_headers(header_bytes):
     return method, url, headers
 
 
-def _process_http_get(url: str, body: bytes) -> Tuple[int, bytes, str]:
-    # Ignore body for GET requests
+def _process_http_get(url: str, body: bytes, sock=None) -> Tuple[int, bytes, str]:
     url_extension = url[url.rfind("."):]
     content_type = _CONTENT_TYPE.get(url_extension, "text/html")
-
     file_path = "www/index.html" if url == "/" else "www/" + url
+
     try:
         with open(file_path, "rb") as file:
-            return 200, file.read(), content_type
+            sock.sendall(_RESPONSE_200.format(content_type).encode('utf-8'))
+            sock.sendall(file.read())
+        gc.collect()
+        return None, None, None
     except OSError:
         print('not found:', url)
         return 404, b'', ''
@@ -102,13 +105,15 @@ class Httpd():
         self.select_poll = select.poll()
         self.select_poll.register(server_socket, select.POLLIN)
 
-    def process_http_request(self, method: str, url: str, body: bytes) -> bytes:
+    def process_http_request(self, method: str, url: str, body: bytes, sock=None) -> bytes:
         handler_key = f"{method} {url}"
         for url_prefix, handler in self.handlers.items():
             if handler_key.startswith(url_prefix):
-                status, body, content_type = handler(url, body)
+                status, body, content_type = handler(url, body, sock)
 
-                if status == 200:
+                if status is None:
+                    return None  # already sent to socket
+                elif status == 200:
                     return _RESPONSE_200.format(content_type or "text/html").encode('utf-8') + body
                 elif status == 404:
                     return _RESPONSE_404.encode('utf-8')
@@ -155,8 +160,9 @@ class Httpd():
                             body.extend(chunk)
                             remaining -= len(chunk)
 
-                        response = self.process_http_request(method, url, body)
-                        sock.sendall(response)
+                        response = self.process_http_request(method, url, body, sock)
+                        if response:
+                            sock.sendall(response)
 
                 except Exception as e:
                     print(f"Error handling request: {e}")

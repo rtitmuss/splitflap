@@ -44,10 +44,10 @@ class SourceHttpd(Source):
 
         # HTTP server
         self.httpd = Httpd({
-            "POST /display": lambda url, body: self.process_post_display(body),
-            "GET /status": lambda url, body: self.process_get_status(),
-            "GET /crontab": lambda url, body: self.process_get_crontab(),
-            "POST /crontab": lambda url, body: self.process_post_crontab(body),
+            "POST /display": lambda url, body, sock: self.process_post_display(body),
+            "GET /status": lambda url, body, sock: self.process_get_status(),
+            "GET /crontab": lambda url, body, sock: self.process_get_crontab(),
+            "POST /crontab": lambda url, body, sock: self.process_post_crontab(body),
         }, port)
 
     def load_crontab(self) -> list:
