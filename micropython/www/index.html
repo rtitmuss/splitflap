@@ -83,6 +83,38 @@
     }
     .status-dot.on { background: #4a4; }
     .status-dot.off { background: #a44; }
+    .tab-bar {
+      display: flex;
+      width: 100%;
+      margin-top: 10px;
+      border-bottom: 1px solid #333;
+    }
+    .tab-bar button {
+      flex: 1;
+      padding: 10px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #666;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .tab-bar button.active {
+      color: #e0e0e0;
+      border-bottom-color: #f0c040;
+    }
+    .tab-bar button:hover {
+      color: #aaa;
+    }
+    .tab-content {
+      display: none;
+      width: 100%;
+    }
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     #form {
       background-color: #252525;
       padding: 10px;
@@ -93,6 +125,7 @@
       align-items: center;
       width: 100%;
       box-sizing: border-box;
+      margin-top: 10px;
     }
     .form-row {
       display: flex;
@@ -137,7 +170,7 @@
       text-decoration: underline;
     }
     .crontab-section {
-      margin-top: 30px;
+      margin-top: 10px;
       padding: 16px;
       background: #252525;
       border: 1px solid #333;
@@ -277,7 +310,10 @@
       }
       container.innerHTML = html;
     }
+    let statusPending = false;
     function updateStatus() {
+      if (statusPending) return;
+      statusPending = true;
       fetch('/status')
         .then(r => r.json())
         .then(status => {
@@ -288,18 +324,29 @@
           document.getElementById('status-uptime').textContent = formatUptime(status.uptime);
           document.getElementById('status-mem').textContent = formatMemory(status.mem_free);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          statusPending = false;
+          setTimeout(updateStatus, 5000);
+        });
     }
     updateStatus();
-    setInterval(updateStatus, 5000);
-    fetch('/crontab')
-      .then(response => response.text())
-      .then(text => {
-        document.getElementById('crontabEditor').value = text;
-      })
-      .catch(error => {
-        showToast('Error loading crontab: ' + error, 'crontabToast');
-      });
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+      if (tabName === 'crontab') {
+        fetch('/crontab')
+          .then(response => response.text())
+          .then(text => {
+            document.getElementById('crontabEditor').value = text;
+          })
+          .catch(error => {
+            showToast('Error loading crontab: ' + error, 'crontabToast');
+          });
+      }
+    }
     async function submitCrontabForm() {
       fetch('/crontab', {
         method: 'POST',
@@ -334,50 +381,58 @@
         <span id="status-mem">--</span>
       </div>
     </div>
-    <form id="form" method="post" action="/display">
-      <div class="form-row">
-          <input type="text" id="text_input" name="text" maxlength="100" placeholder="Enter up to 24 letters">
-          <select id="order_input" name="order" required>
-            <option value="start_in_sync">|&gt;</option>
-            <option value="end_in_sync">&gt;|</option>
-            <option value="sweep">&gt;&gt;</option>
-            <option value="diagonal_sweep">&gt;v</option>
-            <option value="random">##</option>
-          </select>
-          <select id="rpm_input" name="rpm" required>
-            <option value="5">5 rpm</option>
-            <option value="10" selected>10 rpm</option>
-            <option value="15">15 rpm</option>
-          </select>
-      </div>
-      <div class="form-row">
-        <button type="button" onclick="submitGoForm()">Go</button>
-        <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
-      </div>
-      <div id="goToast" class="toast"></div>
-    </form>
-    <div id="preset-container">
-      Clock
-      <a href="#" onclick="preset({format:'CLOCK',text:'%H:%M  %d.%m%w  %tC',timezone:'Europe/Stockholm',lat:'59.33',lon:'18.07'}, 'start_in_sync')">STO</a>
-      <a href="#" onclick="preset({format:'CLOCK',text:'ADL  %H:%M    %d.%m.%Y',timezone:'Australia/Adelaide'}, 'start_in_sync')">ADL</a>
-      <a href="#" onclick="preset({format:'CLOCK',text:'NYC  %H:%M    %d.%m.%Y',timezone:'America/New_York'}, 'start_in_sync')">NYC</a><br/>
-      Word Clock
-      <a href="#" onclick="preset({format:'WORD_CLOCK',lang:'en',timezone:'Europe/Stockholm'}, 'end_in_sync')">STO English</a>
-      <a href="#" onclick="preset({format:'WORD_CLOCK',lang:'sv',timezone:'Europe/Stockholm'}, 'end_in_sync')">STO Svenska</a><br/>
-      <a href="#" onclick="preset({format:'NEW_YEAR',timezone:'Europe/Stockholm'}, 'start_in_sync')">NYE Countdown</a><br/>
-      <a href="#" onclick="preset({format:'ART'}, 'end_in_sync')">Art</a><br/>
-      <a href="#" onclick="preset({format:'MOTION'}, 'start_in_sync')">Motion</a><br/>
-      <a href="#" onclick="preset({format:'DAD_JOKE',text:'Dad joke:'}, 'end_in_sync')">Dad Joke</a><br/>
-      <a href="#" onclick="preset({text:'aaaaaaaaaaaaaaaaaaaaaaaa'}, 'end_in_sync')">As</a>
-      <a href="#" onclick="preset({text:'zzzzzzzzzzzzzzzzzzzzzzzz'}, 'end_in_sync')">Zs</a>
-      <a href="#" onclick="preset({format:'ALL_LETTERS'}, 'end_in_sync')">All</a>
+    <div class="tab-bar">
+      <button class="active" data-tab="display" onclick="switchTab('display')">Display</button>
+      <button data-tab="crontab" onclick="switchTab('crontab')">Crontab</button>
     </div>
-    <div class="crontab-section">
-      <h2>Crontab</h2>
-      <textarea id="crontabEditor" placeholder="Loading crontab..."></textarea>
-      <br>
-      <button type="button" onclick="submitCrontabForm()">Save</button>
-      <div id="crontabToast" class="toast"></div>
+    <div id="tab-display" class="tab-content active">
+      <form id="form" method="post" action="/display">
+        <div class="form-row">
+            <input type="text" id="text_input" name="text" maxlength="100" placeholder="Enter up to 24 letters">
+            <select id="order_input" name="order" required>
+              <option value="start_in_sync">|&gt;</option>
+              <option value="end_in_sync">&gt;|</option>
+              <option value="sweep">&gt;&gt;</option>
+              <option value="diagonal_sweep">&gt;v</option>
+              <option value="random">##</option>
+            </select>
+            <select id="rpm_input" name="rpm" required>
+              <option value="5">5 rpm</option>
+              <option value="10" selected>10 rpm</option>
+              <option value="15">15 rpm</option>
+            </select>
+        </div>
+        <div class="form-row">
+          <button type="button" onclick="submitGoForm()">Go</button>
+          <button type="button" onclick="fillWithRandomWords()">I'm Feeling Lucky</button>
+        </div>
+        <div id="goToast" class="toast"></div>
+      </form>
+      <div id="preset-container">
+        Clock
+        <a href="#" onclick="preset({format:'CLOCK',text:'%H:%M  %d.%m%w  %tC',timezone:'Europe/Stockholm',lat:'59.33',lon:'18.07'}, 'start_in_sync')">STO</a>
+        <a href="#" onclick="preset({format:'CLOCK',text:'ADL  %H:%M    %d.%m.%Y',timezone:'Australia/Adelaide'}, 'start_in_sync')">ADL</a>
+        <a href="#" onclick="preset({format:'CLOCK',text:'NYC  %H:%M    %d.%m.%Y',timezone:'America/New_York'}, 'start_in_sync')">NYC</a><br/>
+        Word Clock
+        <a href="#" onclick="preset({format:'WORD_CLOCK',lang:'en',timezone:'Europe/Stockholm'}, 'end_in_sync')">STO English</a>
+        <a href="#" onclick="preset({format:'WORD_CLOCK',lang:'sv',timezone:'Europe/Stockholm'}, 'end_in_sync')">STO Svenska</a><br/>
+        <a href="#" onclick="preset({format:'NEW_YEAR',timezone:'Europe/Stockholm'}, 'start_in_sync')">NYE Countdown</a><br/>
+        <a href="#" onclick="preset({format:'ART'}, 'end_in_sync')">Art</a><br/>
+        <a href="#" onclick="preset({format:'MOTION'}, 'start_in_sync')">Motion</a><br/>
+        <a href="#" onclick="preset({format:'DAD_JOKE',text:'Dad joke:'}, 'end_in_sync')">Dad Joke</a><br/>
+        <a href="#" onclick="preset({text:'aaaaaaaaaaaaaaaaaaaaaaaa'}, 'end_in_sync')">As</a>
+        <a href="#" onclick="preset({text:'zzzzzzzzzzzzzzzzzzzzzzzz'}, 'end_in_sync')">Zs</a>
+        <a href="#" onclick="preset({format:'ALL_LETTERS'}, 'end_in_sync')">All</a>
+      </div>
+    </div>
+    <div id="tab-crontab" class="tab-content">
+      <div class="crontab-section">
+        <h2>Crontab</h2>
+        <textarea id="crontabEditor" placeholder="Loading crontab..."></textarea>
+        <br>
+        <button type="button" onclick="submitCrontabForm()">Save</button>
+        <div id="crontabToast" class="toast"></div>
+      </div>
     </div>
   </div>
 </body>
