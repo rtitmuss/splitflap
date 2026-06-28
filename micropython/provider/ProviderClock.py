@@ -12,7 +12,7 @@ from provider.Clock import Clock
 from provider.Provider import Provider
 
 _WEATHER_URL = const("https://api.open-meteo.com/v1/forecast")
-_WEATHER_PARAMS = const("&current=temperature_2m&hourly=weather_code&forecast_hours=3")
+_WEATHER_PARAMS = const("&current=temperature_2m,is_day&hourly=weather_code&forecast_hours=3")
 _REQUEST_TIMEOUT = const(10)
 _MAX_RETRIES = const(3)
 _CACHE_MS = const(600_000)  # 10 minutes
@@ -58,6 +58,7 @@ class ProviderClock(Provider):
                     self.weather_cache = {
                         "temperature_2m": current.get("temperature_2m"),
                         "weather_code": max(codes) if codes else None,
+                        "is_day": current.get("is_day", 1),
                     }
                     self.weather_cache_time = time.ticks_ms()
                     print(f"[WEATHER] Updated: {self.weather_cache}")
@@ -74,6 +75,8 @@ class ProviderClock(Provider):
 
     def _replace_weather_codes(self, text: str, weather: dict) -> str:
         if not weather:
+            text = text.replace("%t", "  ?")
+            text = text.replace("%w", "?     ")
             return text
 
         temp = weather.get("temperature_2m")
@@ -82,7 +85,10 @@ class ProviderClock(Provider):
 
         code = weather.get("weather_code")
         if code is not None:
-            text = text.replace("%w", f"{_WEATHER_CODES.get(code, '?'):6s}")
+            desc = _WEATHER_CODES.get(code, "?")
+            if desc == "SUNNY" and not weather.get("is_day", 1):
+                desc = "CLEAR"
+            text = text.replace("%w", f"{desc:6s}")
 
         return text
 
