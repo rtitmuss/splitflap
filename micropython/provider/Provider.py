@@ -5,6 +5,8 @@ from primary.Display import Display
 
 
 class Provider:
+    last_word = None
+
     def get_message(self, args: Dict[str, str], display: Display, motor_position: [int])\
             -> Tuple[Message, Union[int, None]]:
         rpm = int(args.get('rpm', 15))
