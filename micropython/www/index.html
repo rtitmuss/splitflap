@@ -29,8 +29,8 @@
       font-style: normal;
       font-weight: 200;
       font-size: 48px;
-      background-color: #111;
-      color: #f0c040;
+      background-color: #1a1a1a;
+      color: #fff;
       letter-spacing: 2px;
       margin: 10px 0;
       padding: 5px 10px;
@@ -54,7 +54,7 @@
       width: 28px;
       height: 36px;
       background: #222;
-      border: 1px solid #444;
+      border: 1px solid #333;
       border-radius: 3px;
       display: flex;
       align-items: center;
@@ -62,7 +62,7 @@
       font-family: 'Courier New', monospace;
       font-size: 20px;
       font-weight: bold;
-      color: #f0c040;
+      color: #fff;
     }
     .status-info {
       display: flex;
@@ -264,10 +264,8 @@
       const container = document.getElementById('flap-container');
       const rows = status.rows || 2;
       const cols = status.cols || 12;
-      const text = (status.data && status.data.text) || '';
-      const format = (status.data && status.data.format) || '';
-      const label = format || text;
-      const padded = label.toUpperCase().padEnd(rows * cols).slice(0, rows * cols);
+      const text = status.text || '';
+      const padded = text.padEnd(rows * cols).slice(0, rows * cols);
       let html = '';
       for (let r = 0; r < rows; r++) {
         html += '<div class="flap-row">';

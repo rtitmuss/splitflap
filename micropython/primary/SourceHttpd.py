@@ -30,6 +30,7 @@ class SourceHttpd(Source):
         # Trackers for what to display
         self.current_data = None
         self.current_source = SOURCE_CRONTAB
+        self.current_text = None
         self.scheduled_time = None
 
         # Crontab
@@ -68,7 +69,7 @@ class SourceHttpd(Source):
         uptime_s = time.ticks_diff(time.ticks_ms(), self.start_ticks) // 1000
         status = {
             "source": self.current_source,
-            "data": self.current_data,
+            "text": self.current_text,
             "rows": self.display.rows,
             "cols": self.display.cols,
             "mem_free": gc.mem_free(),
@@ -99,6 +100,7 @@ class SourceHttpd(Source):
         provider = self.providers.get(provider_name, self.default_provider)
 
         message, interval_ms = provider.get_message(args, self.display, motor_pos)
+        self.current_text = provider.last_word
         return self.display.virtual_to_physical(message), interval_ms
 
     def load_crontab_message(self):
@@ -129,6 +131,7 @@ class SourceHttpd(Source):
             if time.ticks_diff(self.override_expiry, time.ticks_ms()) <= 0:
                 self.current_source = SOURCE_CRONTAB
                 self.current_data = None
+                self.current_text = None
                 self.scheduled_time = None
                 self.last_crontab_data = None
                 self.override_expiry = None

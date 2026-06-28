@@ -14,6 +14,7 @@ class Provider:
         # filter characters using LETTERS
         clean_word = ''.join(char for char in word.upper() if char in LETTERS)
         display_word = display.adjust_word(clean_word)
+        self.last_word = display_word
         print('word: \'{}\' rpm: {}'.format(display_word, rpm))
 
         if order == "random":
